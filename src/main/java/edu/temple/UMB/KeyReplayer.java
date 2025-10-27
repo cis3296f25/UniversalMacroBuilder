@@ -3,7 +3,8 @@ package edu.temple.UMB;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public class DemoKeyReplayer {
+public class KeyReplayer {
+    // TODO: actually replay input
     public static void main(String[] args) throws AWTException, InterruptedException {
         Robot robot = new Robot();
         robot.keyPress(KeyEvent.VK_H);

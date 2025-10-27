@@ -20,12 +20,11 @@ public class Main {
             throw new IllegalArgumentException(argsRes);
         }
 
-        // since we are just performing proof of feasibility we will simply call a class that captures some input
-        // or call a class to replicate some input
+        // call either the capture or replayer classes
         if (in_file_str != null) {
-            DemoKeyCapture.main(null);
+            KeyCapture.main(null);
         } else if (out_file_str != null) {
-            DemoKeyReplayer.main(null);
+            KeyReplayer.main(null);
         } else {
             System.out.println("How the hell did you end up here?");
             exit(1);

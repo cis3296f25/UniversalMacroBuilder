@@ -4,7 +4,8 @@ import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
-public class DemoKeyCapture implements NativeKeyListener {
+public class KeyCapture implements NativeKeyListener {
+    // TODO: Actually record input
     @Override
     public void nativeKeyPressed(NativeKeyEvent e) {
         System.out.println("Key Pressed: " + NativeKeyEvent.getKeyText(e.getKeyCode()));
@@ -30,6 +31,6 @@ public class DemoKeyCapture implements NativeKeyListener {
             System.exit(1);
         }
 
-        GlobalScreen.addNativeKeyListener(new DemoKeyCapture());
+        GlobalScreen.addNativeKeyListener(new KeyCapture());
     }
 }
