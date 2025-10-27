@@ -1,4 +1,4 @@
-import edu.temple.tuo18747.Main;
+import edu.temple.UMB.Main;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
