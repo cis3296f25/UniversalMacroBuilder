@@ -13,7 +13,7 @@ public class Main {
     File out_file = null;
     File in_file = null;
 
-    public static void main(String[] args) throws InterruptedException, AWTException {
+    public static void main(String[] args) throws InterruptedException, AWTException, Exception {
         String argsRes = argChecks(args);
         if (argsRes != null) {
             System.out.println("Usage: UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>)");
@@ -22,7 +22,9 @@ public class Main {
 
         // call either the capture or replayer classes
         if (in_file_str != null) {
-            KeyCapture.main(null);
+            File outFile = new File(in_file_str);
+            Recorder recorder = new Recorder(outFile);
+            recorder.start();
         } else if (out_file_str != null) {
             KeyReplayer.main(null);
         } else {
