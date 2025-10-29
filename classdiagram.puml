@@ -15,6 +15,22 @@ class Replayer implements Robot {
     inpath: File
 }
 
+class KeyboardReplayer extends Replayer {
+}
+
+class MouseReplayer extends Replayer
+
+class Writer {
+    type: enum {"MOUSE", "KEY"}
+    writeToFile(outpath): void
+}
+
+class Loader {
+    type: enum {"MOUSE", "KEY"}
+    loadFromPath(inpath): Array<Event>
+}
+
+
 class KeyboardEventRecorder implements NativeKeyListener {
     ' this thread will record keyboard input and save the input to an arraylist of keyevent. may potentially need multithreading and syncronization to allow multiple key presses to be recorded at the same time?
     - ArrayList<KeyEvent>: keyEvents
@@ -25,14 +41,19 @@ class MouseEventRecorder implements NativeMouseInputListener {
     - ArrayList<MouseEvent>: mouseEvent
 }
 
-class KeyEvent {
+class Event {
+    - delta: long
+    + getDelta(): long
+
+}
+class KeyEvent extends Event {
     - delta: long
     - event: NativeKeyEvent
     + getDelta(): long
     + getEvent(): NativeKeyEvent
 }
 
-class MouseEvent {
+class MouseEvent extends Event {
     - delta: long
     - event: NativeMouseEvent
     + getDelta(): long
@@ -45,4 +66,12 @@ Recorder --> KeyboardEventRecorder
 MouseEventRecorder --> MouseEvent
 KeyboardEventRecorder --> KeyEvent
 Main --> Replayer
+
+KeyboardReplayer --> Loader
+MouseReplayer --> Loader
+
+KeyboardEventRecorder --> Writer
+MouseEventRecorder --> Writer
+
+
 @enduml
