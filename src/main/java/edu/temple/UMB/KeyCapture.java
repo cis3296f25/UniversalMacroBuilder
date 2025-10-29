@@ -4,15 +4,22 @@ import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
+import java.util.ArrayList;
+
 public class KeyCapture implements NativeKeyListener {
+    public ArrayList<Integer> keyEvents = new ArrayList<Integer>();
     // TODO: Actually record input
     @Override
     public void nativeKeyPressed(NativeKeyEvent e) {
+        keyEvents.add(e.getKeyCode());
         System.out.println("Key Pressed: " + NativeKeyEvent.getKeyText(e.getKeyCode()));
     }
 
     @Override
-    public void nativeKeyReleased(NativeKeyEvent e) { }
+    public void nativeKeyReleased(NativeKeyEvent e) {
+        keyEvents.add(e.getKeyCode());
+        System.out.println("Key Released: " + NativeKeyEvent.getKeyText(e.getKeyCode()));
+    }
 
     @Override
     public void nativeKeyTyped(NativeKeyEvent e) { }
