@@ -22,11 +22,11 @@ public class Main {
 
         // call either the capture or replayer classes
         if (in_file_str != null) {
-            File outFile = new File(in_file_str);
+            KeyReplayer.main(null);
+        } else if (out_file_str != null) {
+            File outFile = new File(out_file_str);
             Recorder recorder = new Recorder(outFile);
             recorder.start();
-        } else if (out_file_str != null) {
-            KeyReplayer.main(null);
         } else {
             System.out.println("How the hell did you end up here?");
             exit(1);
