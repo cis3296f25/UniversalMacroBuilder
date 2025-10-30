@@ -33,7 +33,7 @@ public class KeyboardEventRecorder implements NativeKeyListener {
         }
         long delta = now - firstEventTime;
 
-        keyEvents.add(new KeyEvent(delta, e, true));
+        keyEvents.add(new KeyEvent(delta, e, "PRESSED"));
 
         // ✅ Print what the user types live in the terminal
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
@@ -54,7 +54,7 @@ public class KeyboardEventRecorder implements NativeKeyListener {
     @Override public void nativeKeyReleased(NativeKeyEvent e) {
         long delta = now - firstEventTime;
 
-        keyEvents.add(new KeyEvent(delta, e, false));
+        keyEvents.add(new KeyEvent(delta, e, "RELEASED"));
 
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
         printKeyToTerminal("RELEASED: " + keyText);
