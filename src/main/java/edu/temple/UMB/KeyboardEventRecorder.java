@@ -11,6 +11,7 @@ public class KeyboardEventRecorder implements NativeKeyListener {
     private final List<KeyEvent> keyEvents = new ArrayList<>();
     private boolean recording = true;
     private long firstEventTime = -1;
+    private long now = System.currentTimeMillis();
 
     public void startRecording() throws Exception {
         // Turn off JNativeHook's internal logging to keep the console clean
@@ -26,17 +27,17 @@ public class KeyboardEventRecorder implements NativeKeyListener {
 
     @Override
     public void nativeKeyPressed(NativeKeyEvent e) {
-        long now = System.currentTimeMillis();
+        //long now = System.currentTimeMillis();
         if (firstEventTime == -1){
             firstEventTime = now;
         }
         long delta = now - firstEventTime;
 
-        keyEvents.add(new KeyEvent(delta, e));
+        keyEvents.add(new KeyEvent(delta, e, true));
 
         // ✅ Print what the user types live in the terminal
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
-        printKeyToTerminal(keyText);
+        printKeyToTerminal("PRESSED: " + keyText);
 
         // Press ESC to stop recording
         if (e.getKeyCode() == NativeKeyEvent.VC_ESCAPE) {
@@ -50,7 +51,15 @@ public class KeyboardEventRecorder implements NativeKeyListener {
         }
     }
 
-    @Override public void nativeKeyReleased(NativeKeyEvent e) {}
+    @Override public void nativeKeyReleased(NativeKeyEvent e) {
+        long delta = now - firstEventTime;
+
+        keyEvents.add(new KeyEvent(delta, e, false));
+
+        String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
+        printKeyToTerminal("RELEASED: " + keyText);
+    }
+
     @Override public void nativeKeyTyped(NativeKeyEvent e) {}
 
     public List<KeyEvent> getEvents() {
