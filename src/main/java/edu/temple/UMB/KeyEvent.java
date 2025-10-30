@@ -4,10 +4,12 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 
 public class KeyEvent extends Event {
     private final NativeKeyEvent event;
+    String context;
 
-    public KeyEvent(long delta, NativeKeyEvent event) {
+    public KeyEvent(long delta, NativeKeyEvent event, String context) {
         super(delta);
         this.event = event;
+        this.context = context;
     }
 
     public NativeKeyEvent getEvent() {
@@ -16,6 +18,6 @@ public class KeyEvent extends Event {
 
     @Override
     public String toString() {
-        return getDelta() + " KEY_PRESSED " + NativeKeyEvent.getKeyText(event.getKeyCode());
+        return getDelta() + " " + context + " " + NativeKeyEvent.getKeyText(event.getKeyCode());
     }
 }

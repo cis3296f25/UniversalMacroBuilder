@@ -2,6 +2,7 @@ package edu.temple.UMB;
 
 import java.awt.*;
 import java.io.File;
+import java.util.LinkedHashMap;
 
 import static java.lang.System.exit;
 
@@ -22,6 +23,11 @@ public class Main {
 
         // call either the capture or replayer classes
         if (in_file_str != null) {
+            Loader l =  new Loader();
+            LinkedHashMap<Long, String> key_actions = l.loadKeysFromFile(in_file_str);
+            for (Long key : key_actions.keySet()) {
+                System.out.println(key + ": " + key_actions.get(key));
+            }
             KeyReplayer.main(null);
         } else if (out_file_str != null) {
             File outFile = new File(out_file_str);
