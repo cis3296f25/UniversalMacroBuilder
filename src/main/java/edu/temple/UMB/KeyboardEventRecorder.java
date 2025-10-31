@@ -30,27 +30,47 @@ public class KeyboardEventRecorder implements NativeKeyListener {
         if (firstEventTime == -1){
             firstEventTime = now;
         }
+        // Press ESC to stop recording (before adding it to array)
+        if (e.getKeyCode() == NativeKeyEvent.VC_ESCAPE) {
+            try {
+                System.out.println("\n[Recorder] ESC pressed — stopping...");
+                GlobalScreen.unregisterNativeHook();
+                recording = false;
+                return;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return;
+            }
+        }
+
         long delta = now - firstEventTime;
 
         keyEvents.add(new KeyEvent(delta, e, "PRESSED"));
 
         // ✅ Print what the user types live in the terminal
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
-        printKeyToTerminal(keyText);
+        printKeyToTerminal("PRESSED: " + keyText);
 
-        // Press ESC to stop recording
-        if (e.getKeyCode() == NativeKeyEvent.VC_ESCAPE) {
-            try {
-                System.out.println("\n[Recorder] ESC pressed — stopping...");
-                GlobalScreen.unregisterNativeHook();
-                recording = false;
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
+
     }
 
-    @Override public void nativeKeyReleased(NativeKeyEvent e) {}
+    @Override public void nativeKeyReleased(NativeKeyEvent e) {
+        long now = System.currentTimeMillis();
+        if (firstEventTime == -1){
+            firstEventTime = now;
+            if (e.getKeyCode() == NativeKeyEvent.VC_ENTER) {
+                // we actually just skip this here because it will almost always be the user releasing the enter key
+                return;
+            }
+        }
+        long delta = now - firstEventTime;
+
+        keyEvents.add(new KeyEvent(delta, e, "RELEASED"));
+
+        String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
+        printKeyToTerminal("RELEASED: " + keyText);
+    }
+
     @Override public void nativeKeyTyped(NativeKeyEvent e) {}
 
     public List<KeyEvent> getEvents() {
@@ -65,19 +85,19 @@ public class KeyboardEventRecorder implements NativeKeyListener {
     private void printKeyToTerminal(String keyText) {
         switch (keyText) {
             case "Space":
-                System.out.print(" ");
+                System.out.println(" ");
                 break;
             case "Enter":
                 System.out.println();
                 break;
             case "Backspace":
-                System.out.print("\b \b"); // erase last character
+                System.out.println("\b \b"); // erase last character
                 break;
             case "Tab":
-                System.out.print("\t");
+                System.out.println("\t");
                 break;
             default:
-                System.out.print(keyText);
+                System.out.println(keyText);
         }
     }
 }
