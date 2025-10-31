@@ -1,7 +1,7 @@
 # Project Name
 Universal Macro Builder is a tool for automating repetitive tasks by recording and replaying mouse and keyboard input.
 
-![This is a screenshot.](images.png)
+TODO: get a good screen capture of functionality here.
 # How to run
 - Download the latest JAR from the Release section on the right on GitHub.
 - Run with
