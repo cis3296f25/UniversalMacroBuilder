@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class KeyReplayer {
-    // TODO: actually replay input
+    // TODO: Remove this class when Replayer is is demoable state
     public static void main(String[] args) throws AWTException, InterruptedException {
         Robot robot = new Robot();
         robot.keyPress(KeyEvent.VK_H);
