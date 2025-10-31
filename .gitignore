@@ -1,0 +1,6 @@
+dependency-reduced-pom.xml
+projects-UniversalMacroBuilder.iml
+/target
+.idea
+**.txt
+**.class
