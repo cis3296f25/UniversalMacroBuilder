@@ -11,7 +11,6 @@ public class KeyboardEventRecorder implements NativeKeyListener {
     private final List<KeyEvent> keyEvents = new ArrayList<>();
     private boolean recording = true;
     private long firstEventTime = -1;
-    private long now = System.currentTimeMillis();
 
     public void startRecording() throws Exception {
         // Turn off JNativeHook's internal logging to keep the console clean
@@ -27,10 +26,23 @@ public class KeyboardEventRecorder implements NativeKeyListener {
 
     @Override
     public void nativeKeyPressed(NativeKeyEvent e) {
-        //long now = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
         if (firstEventTime == -1){
             firstEventTime = now;
         }
+        // Press ESC to stop recording (before adding it to array)
+        if (e.getKeyCode() == NativeKeyEvent.VC_ESCAPE) {
+            try {
+                System.out.println("\n[Recorder] ESC pressed — stopping...");
+                GlobalScreen.unregisterNativeHook();
+                recording = false;
+                return;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return;
+            }
+        }
+
         long delta = now - firstEventTime;
 
         keyEvents.add(new KeyEvent(delta, e, "PRESSED"));
@@ -39,19 +51,18 @@ public class KeyboardEventRecorder implements NativeKeyListener {
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
         printKeyToTerminal("PRESSED: " + keyText);
 
-        // Press ESC to stop recording
-        if (e.getKeyCode() == NativeKeyEvent.VC_ESCAPE) {
-            try {
-                System.out.println("\n[Recorder] ESC pressed — stopping...");
-                GlobalScreen.unregisterNativeHook();
-                recording = false;
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
+
     }
 
     @Override public void nativeKeyReleased(NativeKeyEvent e) {
+        long now = System.currentTimeMillis();
+        if (firstEventTime == -1){
+            firstEventTime = now;
+            if (e.getKeyCode() == NativeKeyEvent.VC_ENTER) {
+                // we actually just skip this here because it will almost always be the user releasing the enter key
+                return;
+            }
+        }
         long delta = now - firstEventTime;
 
         keyEvents.add(new KeyEvent(delta, e, "RELEASED"));
@@ -74,19 +85,19 @@ public class KeyboardEventRecorder implements NativeKeyListener {
     private void printKeyToTerminal(String keyText) {
         switch (keyText) {
             case "Space":
-                System.out.print(" ");
+                System.out.println(" ");
                 break;
             case "Enter":
                 System.out.println();
                 break;
             case "Backspace":
-                System.out.print("\b \b"); // erase last character
+                System.out.println("\b \b"); // erase last character
                 break;
             case "Tab":
-                System.out.print("\t");
+                System.out.println("\t");
                 break;
             default:
-                System.out.print(keyText);
+                System.out.println(keyText);
         }
     }
 }
