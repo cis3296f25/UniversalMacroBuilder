@@ -2,6 +2,7 @@ package edu.temple.UMB;
 
 import java.awt.*;
 import java.io.File;
+import java.util.LinkedHashMap;
 
 import static java.lang.System.exit;
 
@@ -10,10 +11,8 @@ public class Main {
     // but we can also just be careful with null checks
     public static String out_file_str = null;
     public static String in_file_str = null;
-    File out_file = null;
-    File in_file = null;
 
-    public static void main(String[] args) throws InterruptedException, AWTException {
+    public static void main(String[] args) throws InterruptedException, AWTException, Exception {
         String argsRes = argChecks(args);
         if (argsRes != null) {
             System.out.println("Usage: UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>)");
@@ -22,9 +21,11 @@ public class Main {
 
         // call either the capture or replayer classes
         if (in_file_str != null) {
-            KeyCapture.main(null);
+            Replayer replayer = new Replayer(in_file_str);
         } else if (out_file_str != null) {
-            KeyReplayer.main(null);
+            File outFile = new File(out_file_str);
+            Recorder recorder = new Recorder(outFile);
+            recorder.start();
         } else {
             System.out.println("How the hell did you end up here?");
             exit(1);
