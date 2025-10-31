@@ -11,8 +11,6 @@ public class Main {
     // but we can also just be careful with null checks
     public static String out_file_str = null;
     public static String in_file_str = null;
-    File out_file = null;
-    File in_file = null;
 
     public static void main(String[] args) throws InterruptedException, AWTException, Exception {
         String argsRes = argChecks(args);
@@ -23,12 +21,7 @@ public class Main {
 
         // call either the capture or replayer classes
         if (in_file_str != null) {
-            Loader l =  new Loader();
-            LinkedHashMap<Long, String> key_actions = l.loadKeysFromFile(in_file_str);
-            for (Long key : key_actions.keySet()) {
-                System.out.println(key + ": " + key_actions.get(key));
-            }
-            KeyReplayer.main(null);
+            Replayer replayer = new Replayer(in_file_str);
         } else if (out_file_str != null) {
             File outFile = new File(out_file_str);
             Recorder recorder = new Recorder(outFile);

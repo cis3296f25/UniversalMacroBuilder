@@ -18,6 +18,6 @@ public class KeyEvent extends Event {
 
     @Override
     public String toString() {
-        return getDelta() + " " + context + " " + NativeKeyEvent.getKeyText(event.getKeyCode());
+        return getDelta() + " " + context + " " + event.getKeyCode();
     }
 }
