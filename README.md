@@ -1,28 +1,26 @@
 # Project Name
-Put here a short paragraph describing your project. 
-Adding an screenshot or a mockup of your application in action would be nice.  
+Universal Macro Builder is a tool for automating repetitive tasks by recording and replaying mouse and keyboard input.
 
 ![This is a screenshot.](images.png)
 # How to run
-Provide here instructions on how to use your application.   
-- Download the latest binary from the Release section on the right on GitHub.  
-- On the command line uncompress using
+- Download the latest JAR from the Release section on the right on GitHub.
+- Run with
 ```
-tar -xzf  
+java -jar <path-to-jar>.jar <arguments>
 ```
-- On the command line run with
-```
-./hello
-```
-- You will see Hello World! on your terminal. 
+Arguments are as specified below:
+
+`-output <path-to-output-file>`:  enters record mode and writes the recorded macro to the output file specified.
+
+`-input <path-to-input-file>`: enters replay mode and loads macro from the input file specified.
+
+Either `-output` or `-input` must be provided, and they each require paths to be given as the next argument.
 
 # How to contribute
-Follow this project board to know the latest status of the project: [http://...]([http://...])  
+Follow this project board to know the latest status of the project: https://github.com/orgs/cis3296f25/projects/66/views/1
 
 ### How to build
-- Use this github repository: ... 
-- Specify what branch to use for a more stable release or for cutting edge development.  
-- Use InteliJ 11
-- Specify additional library to download if needed 
-- What file and target to compile and run. 
-- What is expected to happen when the app start. 
+- Use this github repository: https://github.com/cis3296f25/UniversalMacroBuilder
+- Main is reserved for stable releases. Please create PRs to a staging branch.
+- Use provided pom.xml for dependencies.
+- Run `mvn package` to build.
