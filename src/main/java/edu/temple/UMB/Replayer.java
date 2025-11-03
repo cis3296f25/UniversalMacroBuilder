@@ -10,6 +10,10 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 
+
+/**
+ * The {@code Replayer} class loads, translates, and replays recorded input events (currently keyboard events, with mouse support planned for future versions).
+ */
 public class Replayer {
     private File inFile;
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
@@ -17,23 +21,38 @@ public class Replayer {
     Loader l;
     KeyReplayer kr;
 
-
+    /**
+     * Constructs a new {@code Replayer} from the given file path.
+     * This constructor immediately loads and translates recorded keyboard events
+     * from the file, then initiates replay using {@link KeyReplayer}.
+     * @param inPath the path to the input file containing recorded JNativeHook events.
+     */
     public Replayer(String inPath) {
         this.inFile = new File(inPath);
         l = new Loader(inFile);
+
+        // load events from file
         try {
             loadedJNativeHookEvents = l.loadJNativeEventsFromFile();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
+        // translate those events to AWT events
         JNativeToAWT();
+
+        // debug print
         System.out.println("Loaded JNativeHook events from file and translated to AWTEvents (below)");
         for (Long key : AWTEvents.keySet()) {
             System.out.println(key + " " + AWTEvents.get(key).context + " " + AWTEvents.get(key).event);
         }
+
+        // instantiate the KeyReplayer and replay events
         kr = new KeyReplayer(AWTEvents);
         kr.start();
         kr.scheduler.shutdown();
+
+        // wait for KeyReplayer thread to exit
         try {
             kr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -41,6 +60,13 @@ public class Replayer {
         }
     }
 
+
+    /**
+     * Translates recorded JNativeHook key events into AWT-compatible key events.
+     * This method creates a mapping between {@link NativeKeyEvent} key codes and
+     * {@link KeyEvent} constants, then converts each loaded event into an
+     * {@link AWTReplayEvent}. Unsupported or unmapped keys are logged to the console.
+     */
     private void JNativeToAWT() {
         Map<Integer, Integer> jnativeToAwt = new HashMap<>();
         // TODO: move this to another function so its not reinitialized each run
