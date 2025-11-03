@@ -6,18 +6,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.TimeUnit;
+
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 
 public class Replayer {
-
-    private class AWTReplayEvent {
-        String context;
-        int event;
-        AWTReplayEvent(String context, int event) {
-            this.context = context;
-            this.event = event;
-        }
-    }
     private File inFile;
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
     private LinkedHashMap<Long, AWTReplayEvent> AWTEvents = new LinkedHashMap<>();
@@ -38,7 +31,14 @@ public class Replayer {
         for (Long key : AWTEvents.keySet()) {
             System.out.println(key + " " + AWTEvents.get(key).context + " " + AWTEvents.get(key).event);
         }
-        // kr = new KeyReplayer(awtEvents);
+        kr = new KeyReplayer(AWTEvents);
+        kr.start();
+        kr.scheduler.shutdown();
+        try {
+            kr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void JNativeToAWT() {
