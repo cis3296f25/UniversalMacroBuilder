@@ -71,7 +71,7 @@ public class Main {
 
     //list macros
     private static void listMacros(File macroDir){
-        File[] files = macroDir.listFiles((dir,name) -> name.endsWith(".txt"));
+        File[] files = macroDir.listFiles();
         System.out.println("====== Saved Macros ======");
         if (files == null || files.length == 0) {
             System.out.println("No macros recorded yet.");
