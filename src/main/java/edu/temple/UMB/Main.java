@@ -12,7 +12,23 @@ public class Main {
     public static String out_file_str = null;
     public static String in_file_str = null;
 
+    private static final String MACRO_FOLDER_NAME = "macros";
+
     public static void main(String[] args) throws InterruptedException, AWTException, Exception {
+        //check if macro dir exists
+        File macroDir = new File(MACRO_FOLDER_NAME);
+        if (!macroDir.exists()){
+            if (macroDir.mkdir()){
+                System.out.println("[INFO] Created macros directory: " + macroDir.getAbsolutePath());
+            }
+            else {
+                System.out.println("[ERROR] Could not create macros directory!");
+                exit(1);
+            }
+        }
+        //list existing macros to terminal
+        listMacros(macroDir);
+        
         String argsRes = argChecks(args);
         if (argsRes != null) {
             System.out.println("Usage: UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>)");
@@ -21,9 +37,29 @@ public class Main {
 
         // call either the capture or replayer classes
         if (in_file_str != null) {
-            Replayer replayer = new Replayer(in_file_str);
+            File inFile = new File(macroDir, in_file_str);
+            if (!inFile.exists()){
+                System.out.println("[ERROR] Macro file not found: " + inFile.getAbsolutePath());
+                exit(1);
+            }
+
+            System.out.println("[INFO] Replaying macro: " + inFile.getName());
+            Replayer replayer = new Replayer(inFile.getAbsolutePath());
         } else if (out_file_str != null) {
-            File outFile = new File(out_file_str);
+            File outFile = new File(macroDir, out_file_str);
+
+            //ask if user wants to overwrite
+            if (outFile.exists()){
+                System.out.println("[WARNING] File already exists: " + outFile.getName());
+                System.out.println("Overwrite? (y/n): ");
+                int response = System.in.read();
+                if (response != 'y' && response != 'Y') {
+                    System.out.println("Recording cancelled.");
+                    exit(0);
+                }
+            }
+
+            System.out.println("[INFO] Recording macro: " + outFile.getName());
             Recorder recorder = new Recorder(outFile);
             recorder.start();
         } else {
@@ -31,6 +67,21 @@ public class Main {
             exit(1);
         }
 
+    }
+
+    //list macros
+    private static void listMacros(File macroDir){
+        File[] files = macroDir.listFiles((dir,name) -> name.endsWith(".txt"));
+        System.out.println("====== Saved Macros ======");
+        if (files == null || files.length == 0) {
+            System.out.println("No macros recorded yet.");
+        } 
+        else {
+            for (File f : files) {
+                System.out.println("- " + f.getName());
+            }
+        }
+        System.out.println("==========================\n");
     }
 
     /**
