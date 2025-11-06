@@ -4,29 +4,30 @@ import java.io.File;
 
 public class Recorder {
     private final File outPath;
-    private final KeyboardEventRecorder keyboardRecorder;
+    //private final KeyboardEventRecorder keyboardRecorder;
+    private final InputEventRecorder inputEventRecorder;
 
     public Recorder(File outPath) {
         this.outPath = outPath;
-        this.keyboardRecorder = new KeyboardEventRecorder();
+        this.inputEventRecorder = new InputEventRecorder();
     }
 
     public void start() {
         try {
             System.out.println("Recording started. Press ESC to stop...");
-            keyboardRecorder.startRecording();
+            inputEventRecorder.startRecording();
 
             // Keep the main thread alive while recording
-            while (keyboardRecorder.isRecording()) {
+            while (inputEventRecorder.isRecording()) {
                 Thread.sleep(200);
             }
 
             System.out.println("Recording stopped, saving file...");
 
             Writer writer = new Writer(Writer.Type.KEY);
-            writer.writeToFile(outPath, keyboardRecorder.getEvents());
+            writer.writeToFile(outPath, inputEventRecorder.getEvents());
 
-            System.out.println("Saved recorded keys to: " + outPath.getAbsolutePath());
+            System.out.println("Saved recorded events to: " + outPath.getAbsolutePath());
 
         } catch (Exception e) {
             e.printStackTrace();
