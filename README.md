@@ -10,7 +10,9 @@ java -jar <path-to-jar>.jar <arguments>
 ```
 Arguments are as specified below:
 
-`-output <path-to-output-file>`:  enters record mode and writes the recorded macro to the output file specified.
+`-output <path-to-output-file> -stopkey <key>`:  enters record mode and writes the recorded macro to the output file specified.
+
+Stop key codes are inputted as strings and resolved according to https://javadoc.io/static/com.1stleg/jnativehook/2.0.3/constant-values.html#org.jnativehook.keyboard.NativeKeyEvent.VC_N. For example, an input of `NUM_LOCK` will properly resolve to `VC_NUM_LOCK`, whereas `NUMLOCK` will fail and default to `VC_ESCAPE`.
 
 `-input <path-to-input-file>`: enters replay mode and loads macro from the input file specified.
 
