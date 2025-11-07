@@ -160,11 +160,10 @@ public class Replayer {
         for (Long key : loadedJNativeHookEvents.keySet()) {
             String[] parts = loadedJNativeHookEvents.get(key).split("_");
             try {
-                int rawCode = Integer.parseInt(parts[1]);
-                int normalizedCode = normalizeModifierCode(rawCode);
-                Integer awtCode = jnativeToAwt.get(normalizedCode);
+                int code = Integer.parseInt(parts[1]);
+                Integer awtCode = jnativeToAwt.get(code);
                 if (awtCode == null) {
-                    System.out.println("Key not found: " + rawCode);
+                    System.out.println("Key not found: " + code);
                     continue; // skip unknown keys
                 }
 
@@ -176,21 +175,5 @@ public class Replayer {
                 e.printStackTrace();
             }
         }
-    }
-
-    private static int normalizeModifierCode(int code) {
-        // TODO: find out why right shift is still platform dependent (and how can we fix?)
-        // JNativeHook emits different codes for right-side modifiers
-        return switch (code) {
-            case 54 ->   // Right Shift (example for Windows/Linux)
-                    NativeKeyEvent.VC_SHIFT;
-            case 3613 -> // Right Ctrl
-                    NativeKeyEvent.VC_CONTROL;
-            case 3640 -> // Right Alt
-                    NativeKeyEvent.VC_ALT;
-            case 3675 -> // Right Meta (Windows/Command key)
-                    NativeKeyEvent.VC_META;
-            default -> code; // everything else stays the same
-        };
     }
 }
