@@ -17,6 +17,7 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 public class Replayer {
     private File inFile;
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
+    private static Map<Integer, Integer> jnativeToAwt = new HashMap<>();
     private LinkedHashMap<Long, AWTReplayEvent> AWTEvents = new LinkedHashMap<>();
     Loader l;
     KeyReplayer kr;
@@ -60,17 +61,7 @@ public class Replayer {
         }
     }
 
-
-    /**
-     * Translates recorded JNativeHook key events into AWT-compatible key events.
-     * This method creates a mapping between {@link NativeKeyEvent} key codes and
-     * {@link KeyEvent} constants, then converts each loaded event into an
-     * {@link AWTReplayEvent}. Unsupported or unmapped keys are logged to the console.
-     */
-    private void JNativeToAWT() {
-        Map<Integer, Integer> jnativeToAwt = new HashMap<>();
-        // TODO: move this to another function so its not reinitialized each run
-
+    static {
         // Letters
         jnativeToAwt.put(NativeKeyEvent.VC_A, KeyEvent.VK_A);
         jnativeToAwt.put(NativeKeyEvent.VC_B, KeyEvent.VK_B);
@@ -123,6 +114,9 @@ public class Replayer {
 
         // Modifiers
         jnativeToAwt.put(NativeKeyEvent.VC_SHIFT, KeyEvent.VK_SHIFT);
+        jnativeToAwt.put(NativeKeyEvent.VC_CONTROL, KeyEvent.VK_CONTROL);
+        jnativeToAwt.put(NativeKeyEvent.VC_ALT, KeyEvent.VK_ALT);
+        jnativeToAwt.put(NativeKeyEvent.VC_META, KeyEvent.VK_META);
 
         // Common punctuation
         jnativeToAwt.put(NativeKeyEvent.VC_SPACE, KeyEvent.VK_SPACE);
@@ -153,11 +147,28 @@ public class Replayer {
         jnativeToAwt.put(NativeKeyEvent.VC_INSERT, KeyEvent.VK_INSERT);
         jnativeToAwt.put(NativeKeyEvent.VC_DELETE, KeyEvent.VK_DELETE);
         jnativeToAwt.put(NativeKeyEvent.VC_ESCAPE, KeyEvent.VK_ESCAPE);
+    }
 
+
+    /**
+     * Translates recorded JNativeHook key events into AWT-compatible key events.
+     * This method creates a mapping between {@link NativeKeyEvent} key codes and
+     * {@link KeyEvent} constants, then converts each loaded event into an
+     * {@link AWTReplayEvent}. Unsupported or unmapped keys are logged to the console.
+     */
+    private void JNativeToAWT() {
         for (Long key : loadedJNativeHookEvents.keySet()) {
             String[] parts = loadedJNativeHookEvents.get(key).split("_");
             try {
-                AWTReplayEvent event = new AWTReplayEvent(parts[0], jnativeToAwt.get(Integer.parseInt(parts[1])));
+                int rawCode = Integer.parseInt(parts[1]);
+                int normalizedCode = normalizeModifierCode(rawCode);
+                Integer awtCode = jnativeToAwt.get(normalizedCode);
+                if (awtCode == null) {
+                    System.out.println("Key not found: " + rawCode);
+                    continue; // skip unknown keys
+                }
+
+                AWTReplayEvent event = new AWTReplayEvent(parts[0], awtCode);
                 AWTEvents.put(key, event);
             } catch (Exception e) {
                 System.out.println("Key not found: " + parts[1]);
@@ -165,5 +176,21 @@ public class Replayer {
                 e.printStackTrace();
             }
         }
+    }
+
+    private static int normalizeModifierCode(int code) {
+        // TODO: find out why right shift is still platform dependent (and how can we fix?)
+        // JNativeHook emits different codes for right-side modifiers
+        return switch (code) {
+            case 54 ->   // Right Shift (example for Windows/Linux)
+                    NativeKeyEvent.VC_SHIFT;
+            case 3613 -> // Right Ctrl
+                    NativeKeyEvent.VC_CONTROL;
+            case 3640 -> // Right Alt
+                    NativeKeyEvent.VC_ALT;
+            case 3675 -> // Right Meta (Windows/Command key)
+                    NativeKeyEvent.VC_META;
+            default -> code; // everything else stays the same
+        };
     }
 }
