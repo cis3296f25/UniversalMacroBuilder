@@ -4,3 +4,4 @@ projects-UniversalMacroBuilder.iml
 .idea
 **.txt
 **.class
+/macros
