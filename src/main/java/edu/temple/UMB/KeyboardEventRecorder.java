@@ -24,7 +24,7 @@ public class KeyboardEventRecorder implements NativeKeyListener {
         try {
             return NativeKeyEvent.class.getField("VC_" + keyText.toUpperCase()).getInt(null);
         } catch (Exception e) {
-            System.out.println("Warning: Invalid stop key name '" + keyText + "'. Defaulting to 'ESCAPE'.");
+            System.out.println("Stop key codes are inputted as strings and resolved according to https://javadoc.io/static/com.1stleg/jnativehook/2.0.3/constant-values.html#org.jnativehook.keyboard.NativeKeyEvent.VC_N. For example, an input of NUM_LOCK will properly resolve to VC_NUM_LOCK, whereas NUMLOCK will fail and default to VC_ESCAPE.");
             return NativeKeyEvent.VC_ESCAPE;
         }
     }
