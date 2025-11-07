@@ -34,7 +34,7 @@ public class Main {
         
         String argsRes = argChecks(args);
         if (argsRes != null) {
-            System.out.println("Usage: UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>)");
+            System.out.println("Usage: UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey stopkey]");
             throw new IllegalArgumentException(argsRes);
         }
 
