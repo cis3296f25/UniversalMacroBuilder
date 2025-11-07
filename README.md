@@ -1,18 +1,22 @@
-# Project Name
+# Universal Macro Builder
 Universal Macro Builder is a tool for automating repetitive tasks by recording and replaying mouse and keyboard input.
 
-TODO: get a good screen capture of functionality here.
 # How to run
 - Download the latest JAR from the Release section on the right on GitHub.
 - Run with
 ```
-java -jar <path-to-jar>.jar <arguments>
+java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey stopkey]
 ```
 Arguments are as specified below:
 
 `-output <path-to-output-file>`:  enters record mode and writes the recorded macro to the output file specified.
 
-`-input <path-to-input-file>`: enters replay mode and loads macro from the input file specified.
+`-input <path-to-input-file>`: enters replay mode and executes the macro saved at the specified path.
+
+`-stopkey <key>`:  the key to stop recording and exit the program.
+
+Stop key codes are inputted as strings and resolved according to the [JNative Constants page](https://javadoc.io/static/com.1stleg/jnativehook/2.0.3/constant-values.html#org.jnativehook.keyboard.NativeKeyEvent.VC_N).
+For example, an input of `NUM_LOCK` will properly resolve to `VC_NUM_LOCK`, whereas `NUMLOCK` will fail and default to `VC_ESCAPE`.
 
 Either `-output` or `-input` must be provided, and they each require paths to be given as the next argument.
 
