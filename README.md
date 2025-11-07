@@ -6,7 +6,7 @@ TODO: get a good screen capture of functionality here.
 - Download the latest JAR from the Release section on the right on GitHub.
 - Run with
 ```
-java -jar <path-to-jar>.jar <arguments>
+java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey stopkey]
 ```
 Arguments are as specified below:
 
