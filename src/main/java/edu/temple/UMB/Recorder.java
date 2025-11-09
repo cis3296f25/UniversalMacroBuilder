@@ -24,8 +24,10 @@ public class Recorder {
 
             System.out.println("Recording stopped, saving file...");
 
-            Writer writer = new Writer(Writer.Type.KEY);
-            writer.writeToFile(outPath, inputEventRecorder.getEvents());
+            Writer keyWriter = new Writer(Writer.Type.KEY);
+            keyWriter.writeToFile(outPath, inputEventRecorder.getKeyEvents(), false);
+            Writer mouseWriter = new Writer(Writer.Type.MOUSE);
+            mouseWriter.writeToFile(outPath, inputEventRecorder.getMouseEvents(), true);
 
             System.out.println("Saved recorded events to: " + outPath.getAbsolutePath());
 

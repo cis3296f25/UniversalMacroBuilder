@@ -12,8 +12,8 @@ public class Writer {
         this.type = type;
     }
 
-    public void writeToFile(File path, List<? extends Event> events) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+    public void writeToFile(File path, List<? extends Event> events, boolean append) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path, append))) {
             writer.write("START " + type.name() + " EVENTS\n");
             for (Event e : events) {
                 writer.write(e.toString());

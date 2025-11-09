@@ -6,11 +6,13 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 import com.github.kwhat.jnativehook.mouse.NativeMouseEvent;
 import com.github.kwhat.jnativehook.mouse.NativeMouseInputListener;
 
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
 
 public class InputEventRecorder implements NativeKeyListener, NativeMouseInputListener {
-    private final List<Event> inputEvents = new ArrayList<>();
+    private final List<KeyEvent> keyEvents = new ArrayList<>();
+    private final List<MouseEvent> mouseEvents = new ArrayList<>();
     private boolean recording = true;
     private long firstEventTime = -1;
 
@@ -49,7 +51,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
         long delta = now - firstEventTime;
 
-        inputEvents.add(new KeyEvent(delta, e, "PRESSED"));
+        keyEvents.add(new KeyEvent(delta, e, "PRESSED"));
 
         // ✅ Print what the user types live in the terminal
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
@@ -69,7 +71,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         }
         long delta = now - firstEventTime;
 
-        inputEvents.add(new KeyEvent(delta, e, "RELEASED"));
+        keyEvents.add(new KeyEvent(delta, e, "RELEASED"));
 
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
         printKeyToTerminal("RELEASED: " + keyText);
@@ -88,7 +90,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
         long delta = now - firstEventTime;
 
-        inputEvents.add(new MouseEvent(delta, e, "MOUSE PRESSED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE PRESSED"));
 
         // ✅ Print what the user types live in the terminal
         String eventText = e.paramString();
@@ -105,7 +107,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         }
         long delta = now - firstEventTime;
 
-        inputEvents.add(new MouseEvent(delta, e, "MOUSE RELEASED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE RELEASED"));
 
         String eventText = e.paramString();
         printMouseEventToTerminal("MOUSE RELEASED: " + eventText);
@@ -121,7 +123,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         }
         long delta = now - firstEventTime;
 
-        inputEvents.add(new MouseEvent(delta, e, "MOUSE DRAGGED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE DRAGGED"));
         String eventText = e.paramString();
         printMouseEventToTerminal("MOUSE DRAGGED: " + eventText);
     }
@@ -134,13 +136,15 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         }
         long delta = now - firstEventTime;
 
-        inputEvents.add(new MouseEvent(delta, e, "MOUSE MOVED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE MOVED"));
         String eventText = e.paramString();
         printMouseEventToTerminal("MOUSE MOVED: " + eventText);
     }
 
 
-    public List<Event> getEvents() { return inputEvents; }
+    public List<KeyEvent> getKeyEvents() { return keyEvents; }
+
+    public List<MouseEvent> getMouseEvents() { return mouseEvents; }
 
     public boolean isRecording() {
         return recording;
