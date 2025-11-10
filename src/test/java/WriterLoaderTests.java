@@ -68,7 +68,6 @@ class WriterLoaderTests {
         assertEquals("100 PRESS_A", lines.get(1));
         assertEquals("200 RELEASE_A", lines.get(2));
         assertEquals("END KEY EVENTS", lines.get(3));
-        assertEquals("EOF", lines.get(4));
     }
 
     // test that the writer works for mouse events too

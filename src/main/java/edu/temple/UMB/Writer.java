@@ -13,14 +13,17 @@ public class Writer {
     }
 
     public void writeToFile(File path, List<? extends Event> events) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path, true))) {
             writer.write("START " + type.name() + " EVENTS\n");
             for (Event e : events) {
                 writer.write(e.toString());
                 writer.newLine();
             }
             writer.write("END " + type.name() + " EVENTS\n");
-            writer.write("EOF\n");
+            if(type.name().equals("MOUSE")){
+                writer.write("EOF\n");
+            }
+
         }
     }
 }

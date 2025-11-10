@@ -2,6 +2,7 @@ package edu.temple.UMB;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.LinkedHashMap;
 
 import static java.lang.System.exit;
@@ -58,7 +59,7 @@ public class Main {
                     exit(0);
                 }
             }
-
+            new FileWriter(outFile, false).close();
             System.out.println("[INFO] Recording macro: " + outFile.getName());
             Recorder recorder = new Recorder(outFile);
             recorder.start();
