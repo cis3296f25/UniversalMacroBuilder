@@ -20,7 +20,10 @@ public class Writer {
                 writer.newLine();
             }
             writer.write("END " + type.name() + " EVENTS\n");
-            writer.write("EOF\n");
+            if(type.name().equals("MOUSE")){
+                writer.write("EOF\n");
+            }
+
         }
     }
 }
