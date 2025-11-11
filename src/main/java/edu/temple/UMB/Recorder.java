@@ -7,14 +7,15 @@ public class Recorder {
     //private final KeyboardEventRecorder keyboardRecorder;
     private final InputEventRecorder inputEventRecorder;
 
-    public Recorder(File outPath) {
+
+    public Recorder(File outPath, String stopKey) {
         this.outPath = outPath;
-        this.inputEventRecorder = new InputEventRecorder();
+        this.inputEventRecorder = new InputEventRecorder(stopKey);
     }
 
     public void start() {
         try {
-            System.out.println("Recording started. Press ESC to stop...");
+            System.out.println("Recording started. Press your specified stopkey to stop...");
             inputEventRecorder.startRecording();
 
             // Keep the main thread alive while recording
