@@ -14,9 +14,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * This {@code KeyReplayer} class is responsible for replaying a sequence of {@link AWTReplayEvent}s at designated timestamps.
- * It uses {@link ScheduledExecutorService} to schedule the events before they are executed, and each event is then
- * executed with {@link Robot}.
+ * Replays a sequence of translated keyboard {@link AWTReplayEvent}s at specific timestamps.
+ * Uses a {@link ScheduledExecutorService} to schedule events and a {@link Robot} to emit key presses and releases.
+ * <p>
+ * Notes on timing and lifecycle:
+ * - Event delays are computed relative to when this instance was created, not when {@code start()} is invoked.
+ * - This class does not block; callers are responsible for shutting down and awaiting the {@code scheduler} if needed.
  */
 public class KeyReplayer {
     private static final Logger logger = LogManager.getLogger(KeyReplayer.class);
@@ -30,24 +33,22 @@ public class KeyReplayer {
     // the (lazy instantiation) of the Robot class to be used for actual replay
     private Robot robot;
 
-    public KeyReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) {
+    /**
+     * Constructor for {@link KeyReplayer}.
+     * @param loadedJNativeHookEvents The JNativeHook events returned by {@link Loader}.
+     * @throws RuntimeException if the {@link Robot} cannot be created (e.g., if the environment does not support AWT operations).
+     */
+    public KeyReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
         // translate those events to AWT events
         JNativeToAWT(loadedJNativeHookEvents);
 
         // debug print
-        logger.info("Translated to {} AWT events",  awtEvents.size());
+        logger.info("Translated to {} AWT events", awtEvents.size());
         for (Long key : awtEvents.keySet()) {
             logger.debug("{} {} {}", key, awtEvents.get(key).context, awtEvents.get(key).event);
         }
-    }
 
-    /**
-     * Schedules and starts playback of specified event sequence. Initializes a {@link Robot} instance, then schedules
-     * each event in {@code awtEvents} to execute at the appropriate time relative to when playback begins.
-     * If an event's timestamp is in the past, it will be executed immediately.
-     * @throws RuntimeException if the {@link Robot} cannot be created (e.g., if the environment does not support AWT operations).
-     */
-    public void start() {
+        // initialize robot so now so we have minimal overhead later
         try {
             robot = new Robot();
             logger.info("Key replay started with {} events", awtEvents.size());
@@ -55,9 +56,16 @@ public class KeyReplayer {
             logger.fatal("Failed to initialize Robot for key replay", e);
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Schedules and starts playback of specified event sequence. Schedules each event in {@code awtEvents} to execute
+     * at the appropriate time relative to when playback begins. If an event's timestamp is in the past, it will be executed immediately.
+     */
+    public void start() {
         for (Long key : awtEvents.keySet()) {
             long delay = key - (System.currentTimeMillis() - startTime);
-            if (delay < 0) delay = 0; // skip past events
+            if (delay < 0) delay = 0;
             scheduler.schedule(() -> executeEvent(awtEvents.get(key)), delay, TimeUnit.MILLISECONDS);
         }
     }
@@ -66,6 +74,7 @@ public class KeyReplayer {
      * Executes a single {@link AWTReplayEvent}.
      * Depending on the {@code context} of the event ("PRESSED" or "RELEASED"),
      * this method will call {@link Robot#keyPress(int)} or {@link Robot#keyRelease(int)}.
+     *
      * @param event the {@link AWTReplayEvent} to execute
      */
     private void executeEvent(AWTReplayEvent event) {
