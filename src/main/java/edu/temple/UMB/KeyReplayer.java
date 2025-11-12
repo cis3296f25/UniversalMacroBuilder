@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This {@code KeyReplayer} class is responsible for replaying a sequence of {@link AWTReplayEvent}s at designated timestamps.
@@ -12,6 +14,7 @@ import java.util.concurrent.TimeUnit;
  * executed with {@link Robot}.
  */
 public class KeyReplayer {
+    private static final Logger logger = LogManager.getLogger(KeyReplayer.class);
     // ordered mapping of timestamps to AWTReplayEvents
     LinkedHashMap<Long, AWTReplayEvent> awtEvents;
     // the scheduler we will use to enable accurate playback. TODO: make this private and have this class auto terminate after last event
@@ -39,7 +42,9 @@ public class KeyReplayer {
     public void start() {
         try {
             robot = new Robot();
+            logger.info("Key replay started with {} events", awtEvents.size());
         } catch (AWTException e) {
+            logger.fatal("Failed to initialize Robot for key replay", e);
             throw new RuntimeException(e);
         }
         for (Long key : awtEvents.keySet()) {
@@ -56,7 +61,7 @@ public class KeyReplayer {
      * @param event the {@link AWTReplayEvent} to execute
      */
     private void executeEvent(AWTReplayEvent event) {
-        System.out.println("Executing " + event.context + " with code " + event.event);
+        logger.debug("Executing {} with code {}", event.context, event.event);
         if (event.context.equals("PRESSED")) {
             robot.keyPress(event.event);
         } else if (event.context.equals("RELEASED")) {
