@@ -102,33 +102,38 @@ public class Main {
             return "ERROR: No arguments given!";
         }
         for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("-output")) {
-                if (out_file_str != null || in_file_str != null) {
-                    return "ERROR: Output or input file already specified!";
-                } else if (i+1 < args.length) {
-                    out_file_str = args[i+1];
-                    i++;
-                } else {
-                    return "ERROR: Argument -output requires an argument!";
+            switch (args[i]) {
+                case "-output" -> {
+                    if (out_file_str != null || in_file_str != null) {
+                        return "ERROR: Output or input file already specified!";
+                    } else if (i + 1 < args.length) {
+                        out_file_str = args[i + 1];
+                        i++;
+                    } else {
+                        return "ERROR: Argument -output requires an argument!";
+                    }
                 }
-            } else if (args[i].equals("-input")) {
-                if (out_file_str != null || in_file_str != null) {
-                    return "ERROR: Output or input file already specified!";
-                } else if (i+1 < args.length ) {
-                    in_file_str = args[i+1];
-                    i++;
-                } else  {
-                    return "ERROR: Argument -input requires an argument!";
+                case "-input" -> {
+                    if (out_file_str != null || in_file_str != null) {
+                        return "ERROR: Output or input file already specified!";
+                    } else if (i + 1 < args.length) {
+                        in_file_str = args[i + 1];
+                        i++;
+                    } else {
+                        return "ERROR: Argument -input requires an argument!";
+                    }
                 }
-            } else if (args[i].equals("-stopkey")) {
-                if (i+1 < args.length) {
-                    stopKey = args[i+1];
-                    i++;
-                } else {
-                    return "ERROR: Argument -stopkey requires an argument!";
+                case "-stopkey" -> {
+                    if (i + 1 < args.length) {
+                        stopKey = args[i + 1];
+                        i++;
+                    } else {
+                        return "ERROR: Argument -stopkey requires an argument!";
+                    }
                 }
-            } else {
-                return "ERROR: Unknown argument: " + args[i];
+                default -> {
+                    return "ERROR: Unknown argument: " + args[i];
+                }
             }
         }
 
