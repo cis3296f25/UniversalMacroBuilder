@@ -1,8 +1,11 @@
 package edu.temple.UMB;
 
 import java.io.File;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Recorder {
+    private static final Logger logger = LogManager.getLogger(Recorder.class);
     private final File outPath;
     //private final KeyboardEventRecorder keyboardRecorder;
     private final InputEventRecorder inputEventRecorder;
@@ -16,6 +19,7 @@ public class Recorder {
     public void start() {
         try {
             System.out.println("Recording started. Press your specified stopkey to stop...");
+            logger.info("Recording started. Waiting for stop key...");
             inputEventRecorder.startRecording();
 
             // Keep the main thread alive while recording
@@ -24,6 +28,7 @@ public class Recorder {
             }
 
             System.out.println("Recording stopped, saving file...");
+            logger.info("Recording stopped. Saving to file: {}", outPath.getAbsolutePath());
 
             Writer keyWriter = new Writer(Writer.Type.KEY);
             keyWriter.writeToFile(outPath, inputEventRecorder.getKeyEvents());
@@ -31,9 +36,10 @@ public class Recorder {
             mouseWriter.writeToFile(outPath, inputEventRecorder.getMouseEvents());
 
             System.out.println("Saved recorded events to: " + outPath.getAbsolutePath());
+            logger.info("Saved recorded events to: {}", outPath.getAbsolutePath());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error during recording or writing to file {}", outPath.getAbsolutePath(), e);
         }
     }
 }
