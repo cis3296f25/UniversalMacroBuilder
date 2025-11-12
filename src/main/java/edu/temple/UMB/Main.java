@@ -12,7 +12,8 @@ public class Main {
     // but we can also just be careful with null checks
     public static String out_file_str = null;
     public static String in_file_str = null;
-
+   
+    public static String stopKey = "ESCAPE";
     private static final String MACRO_FOLDER_NAME = "macros";
 
     public static void main(String[] args) throws InterruptedException, AWTException, Exception {
@@ -29,10 +30,10 @@ public class Main {
         }
         //list existing macros to terminal
         listMacros(macroDir);
-        
+       
         String argsRes = argChecks(args);
         if (argsRes != null) {
-            System.out.println("Usage: UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>)");
+            System.out.println("Usage: UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey stopkey]");
             throw new IllegalArgumentException(argsRes);
         }
 
@@ -61,7 +62,7 @@ public class Main {
             }
             new FileWriter(outFile, false).close();
             System.out.println("[INFO] Recording macro: " + outFile.getName());
-            Recorder recorder = new Recorder(outFile);
+            Recorder recorder = new Recorder(outFile, stopKey);
             recorder.start();
         } else {
             System.out.println("How the hell did you end up here?");
@@ -76,7 +77,7 @@ public class Main {
         System.out.println("====== Saved Macros ======");
         if (files == null || files.length == 0) {
             System.out.println("No macros recorded yet.");
-        } 
+        }
         else {
             for (File f : files) {
                 System.out.println("- " + f.getName());
@@ -118,6 +119,13 @@ public class Main {
                     i++;
                 } else  {
                     return "ERROR: Argument -input requires an argument!";
+                }
+            } else if (args[i].equals("-stopkey")) {
+                if (i+1 < args.length) {
+                    stopKey = args[i+1];
+                    i++;
+                } else {
+                    return "ERROR: Argument -stopkey requires an argument!";
                 }
             } else {
                 return "ERROR: Unknown argument: " + args[i];
