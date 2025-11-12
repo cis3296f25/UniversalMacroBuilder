@@ -17,7 +17,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
     private static final Logger logger = LogManager.getLogger(InputEventRecorder.class);
     private final List<KeyEvent> keyEvents = new ArrayList<>();
     private final List<MouseEvent> mouseEvents = new ArrayList<>();
-    private boolean recording = true;
+    private boolean recording;
     private long firstEventTime = -1;
     private final int stopKeyCode;
     
@@ -29,6 +29,12 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
     // Helper method to convert the stop key to JNativeHook key code
     private int keyTextToJNative(String keyText) {
+        // Turn off JNativeHook's internal logging to keep the console clean
+        java.util.logging.Logger jnhLogger =
+                java.util.logging.Logger.getLogger(GlobalScreen.class.getPackage().getName());
+        jnhLogger.setLevel(java.util.logging.Level.OFF);
+        jnhLogger.setUseParentHandlers(false);
+
         try {
             return NativeKeyEvent.class.getField("VC_" + keyText.toUpperCase()).getInt(null);
         } catch (Exception e) {
@@ -39,14 +45,9 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
     }
 
     public void startRecording() throws Exception {
-        // Turn off JNativeHook's internal logging to keep the console clean
-        java.util.logging.Logger jnhLogger =
-                java.util.logging.Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        jnhLogger.setLevel(java.util.logging.Level.OFF);
-        jnhLogger.setUseParentHandlers(false);
-
         logger.info("Registering native hooks and starting input recording");
         // Register the global key hook
+        recording = true;
         GlobalScreen.registerNativeHook();
         GlobalScreen.addNativeKeyListener(this);
         GlobalScreen.addNativeMouseListener(this);
@@ -77,7 +78,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
         keyEvents.add(new KeyEvent(delta, e, "PRESSED"));
 
-        // ✅ Print what the user types live in the terminal
+        // Print what the user types live in the terminal
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
         printKeyToTerminal("PRESSED: " + keyText);
 
@@ -109,18 +110,14 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         if (firstEventTime == -1){
             firstEventTime = now;
         }
-        // Press ESC to stop recording (before adding it to array)
-
 
         long delta = now - firstEventTime;
 
         mouseEvents.add(new MouseEvent(delta, e, "MOUSE PRESSED"));
 
-        // ✅ Print what the user types live in the terminal
+        // Print what the user types live in the terminal
         String eventText = e.paramString();
         printMouseEventToTerminal("MOUSE PRESSED: " + eventText);
-
-
     }
 
     @Override
