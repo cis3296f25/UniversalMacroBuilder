@@ -3,6 +3,8 @@ package edu.temple.UMB;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.LinkedHashMap;
+import java.util.Scanner;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
@@ -18,6 +20,7 @@ public class Main {
     public static String in_file_str = null;
    
     public static String stopKey = "ESCAPE";
+    public static boolean listMacrosFlag = false;
     private static final String MACRO_FOLDER_NAME = "macros";
 
     public static void main(String[] args) throws InterruptedException, AWTException, Exception {
@@ -37,13 +40,20 @@ public class Main {
         } else {
             logger.debug("Macro folder already exists.");
         }
-        //list existing macros to terminal
-        listMacros(macroDir);
-       
         String argsRes = argChecks(args);
         if (argsRes != null) {
-            System.out.println("Usage: UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey stopkey]");
+            System.out.println("""
+            Usage:
+                java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey <stopkey>]
+                java -jar UniversalMacroBuilder.jar -l
+            """);
             throw new IllegalArgumentException(argsRes);
+        }
+
+        if(listMacrosFlag){
+            //list existing macros to terminal
+            listMacros(macroDir);
+            exit(0);
         }
 
         // call either the capture or replayer classes
@@ -52,7 +62,15 @@ public class Main {
             if (!inFile.exists()){
                 logger.fatal("File not found: {}", in_file_str);
                 System.out.println("[ERROR] Macro file not found: " + inFile.getAbsolutePath());
-                exit(1);
+                listMacros(macroDir);
+
+                //user can select which macro
+                File selected = promptUserForMacro(macroDir);
+                if(selected ==null){
+                    System.out.println("No valid selection. Exiting.");
+                    exit(1);
+                }
+                inFile = selected;
             }
 
             logger.info("Replaying macro: {}", inFile.getAbsolutePath());
@@ -94,11 +112,26 @@ public class Main {
             System.out.println("No macros recorded yet.");
         }
         else {
-            for (File f : files) {
-                System.out.println("- " + f.getName());
+            for (int i = 0; i < files.length; i++) {
+                System.out.println((i + 1) + ") " + files[i].getName());
             }
         }
         System.out.println("==========================\n");
+    }
+
+    //prompt for getting the user to select a macro
+    private static File promptUserForMacro(File macroDir) {
+        File[] files = macroDir.listFiles();
+        if (files == null || files.length == 0) return null;
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter macro number to replay: ");
+        if (!scanner.hasNextInt()) {
+            System.out.println("Invalid input.");
+            return null;
+        }
+        int choice = scanner.nextInt();
+        return files[choice - 1];
     }
 
     /**
@@ -153,15 +186,20 @@ public class Main {
                         return "ERROR: Argument -stopkey requires an argument!";
                     }
                 }
+                case "-l" -> {
+                    if (out_file_str != null || in_file_str != null) {
+                        return "ERROR: -list cannot be used with input or output!";
+                    }
+                    listMacrosFlag = true;
+                }
                 default -> {
                     logger.fatal("Unknown argument: " + args[i]);
                     return "ERROR: Unknown argument: " + args[i];
                 }
             }
         }
-
         // sanity check but included for future cases
-        if (out_file_str == null && in_file_str == null) {
+        if (!listMacrosFlag && out_file_str == null && in_file_str == null) {
             return "ERROR: Either -input or -output must be specified!";
         }
 
