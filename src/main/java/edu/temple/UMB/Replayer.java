@@ -46,6 +46,9 @@ public class Replayer {
         }
 
         kr = new KeyReplayer(loadedJNativeHookEvents);
+    }
+
+    public void start() {
         kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
         kr.scheduler.shutdown();
 
