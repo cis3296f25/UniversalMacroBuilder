@@ -5,8 +5,7 @@ Universal Macro Builder is a tool for automating repetitive tasks by recording a
 - Download the latest JAR from the Release section on the right on GitHub.
 - Run with
 ```
-java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey stopkey]
-java -jar UniversalMacroBuilder.jar -1
+java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey <stopkey>] [-l]
 ```
 Arguments are as specified below:
 

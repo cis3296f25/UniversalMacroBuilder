@@ -42,11 +42,7 @@ public class Main {
         }
         String argsRes = argChecks(args);
         if (argsRes != null) {
-            System.out.println("""
-            Usage:
-                java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey <stopkey>]
-                java -jar UniversalMacroBuilder.jar -l
-            """);
+            System.out.println("java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey <stopkey>] [-l]");
             throw new IllegalArgumentException(argsRes);
         }
 
@@ -188,7 +184,8 @@ public class Main {
                 }
                 case "-l" -> {
                     if (out_file_str != null || in_file_str != null) {
-                        return "ERROR: -list cannot be used with input or output!";
+                        logger.fatal("-l used with input or output!");
+                        return "ERROR: -l should not be used with input or output!";
                     }
                     listMacrosFlag = true;
                 }
