@@ -6,12 +6,15 @@ Universal Macro Builder is a tool for automating repetitive tasks by recording a
 - Run with
 ```
 java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey stopkey]
+java -jar UniversalMacroBuilder.jar -1
 ```
 Arguments are as specified below:
 
 `-output <path-to-output-file>`:  enters record mode and writes the recorded macro to the output file specified.
 
 `-input <path-to-input-file>`: enters replay mode and executes the macro saved at the specified path.
+
+`-l`:  list all available macros
 
 `-stopkey <key>`:  the key to stop recording and exit the program.
 
