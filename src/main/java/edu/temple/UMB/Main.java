@@ -3,11 +3,15 @@ package edu.temple.UMB;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.LinkedHashMap;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import static java.lang.System.exit;
 
 public class Main {
+
+    private static final Logger logger = LogManager.getLogger(Main.class);
+
     // only one of these strings and files will be populated per run. we could use an enum to help with telling which mode we're in
     // but we can also just be careful with null checks
     public static String out_file_str = null;
@@ -17,16 +21,21 @@ public class Main {
     private static final String MACRO_FOLDER_NAME = "macros";
 
     public static void main(String[] args) throws InterruptedException, AWTException, Exception {
+        logger.info("Starting UMB.");
         //check if macro dir exists
         File macroDir = new File(MACRO_FOLDER_NAME);
         if (!macroDir.exists()){
             if (macroDir.mkdir()){
                 System.out.println("[INFO] Created macros directory: " + macroDir.getAbsolutePath());
+                logger.info("Created macros directory: {}", macroDir.getAbsolutePath());
             }
             else {
                 System.out.println("[ERROR] Could not create macros directory!");
+                logger.fatal("Could not create macros directory!");
                 exit(1);
             }
+        } else {
+            logger.debug("Macro folder already exists.");
         }
         //list existing macros to terminal
         listMacros(macroDir);
@@ -41,10 +50,12 @@ public class Main {
         if (in_file_str != null) {
             File inFile = new File(macroDir, in_file_str);
             if (!inFile.exists()){
+                logger.fatal("File not found: {}", in_file_str);
                 System.out.println("[ERROR] Macro file not found: " + inFile.getAbsolutePath());
                 exit(1);
             }
 
+            logger.info("Replaying macro: {}", inFile.getAbsolutePath());
             System.out.println("[INFO] Replaying macro: " + inFile.getName());
             Replayer replayer = new Replayer(inFile.getAbsolutePath());
         } else if (out_file_str != null) {
@@ -52,15 +63,19 @@ public class Main {
 
             //ask if user wants to overwrite
             if (outFile.exists()){
+                logger.info("File exists: {}", outFile.getAbsolutePath());
                 System.out.println("[WARNING] File already exists: " + outFile.getName());
                 System.out.println("Overwrite? (y/n): ");
                 int response = System.in.read();
                 if (response != 'y' && response != 'Y') {
+                    logger.fatal("User disallowed overwriting of: {}", outFile.getAbsolutePath());
                     System.out.println("Recording cancelled.");
                     exit(0);
                 }
+                logger.info("User approved overwriting of: {}", outFile.getAbsolutePath());
             }
             new FileWriter(outFile, false).close();
+            logger.info("Recording to file: {}", outFile.getAbsolutePath());
             System.out.println("[INFO] Recording macro: " + outFile.getName());
             Recorder recorder = new Recorder(outFile, stopKey);
             recorder.start();
@@ -90,7 +105,7 @@ public class Main {
      * Checks args given to ensure the following:
      * <ul>
      * <li> Either input or output is given.</li>
-     * <li> After either input or output must be a filename. TODO: this is not checked for validity/permissions yet.</li>
+     * <li> After either input or output must be a filename.
      * <li> Both input and output may not be given.</li>
      * <li> No unknown arguments are given.</li>
      * </ul>
@@ -98,28 +113,34 @@ public class Main {
      * @return Null if all checks are successful, else an error message for the caller to throw with IllegalArgumentException.
      */
     public static String argChecks(String[] args) {
+        logger.trace("Arguments provided: {}", String.join(" ", args));
         if (args.length == 0) {
+            logger.fatal("No arguments given!");
             return "ERROR: No arguments given!";
         }
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "-output" -> {
                     if (out_file_str != null || in_file_str != null) {
+                        logger.fatal("Output or input file already specified!");
                         return "ERROR: Output or input file already specified!";
                     } else if (i + 1 < args.length) {
                         out_file_str = args[i + 1];
                         i++;
                     } else {
+                        logger.fatal("No output file provided!");
                         return "ERROR: Argument -output requires an argument!";
                     }
                 }
                 case "-input" -> {
                     if (out_file_str != null || in_file_str != null) {
+                        logger.fatal("Output or input file already specified!");
                         return "ERROR: Output or input file already specified!";
                     } else if (i + 1 < args.length) {
                         in_file_str = args[i + 1];
                         i++;
                     } else {
+                        logger.fatal("No input file provided!");
                         return "ERROR: Argument -input requires an argument!";
                     }
                 }
@@ -128,10 +149,12 @@ public class Main {
                         stopKey = args[i + 1];
                         i++;
                     } else {
+                        logger.fatal("No stopkey provided!");
                         return "ERROR: Argument -stopkey requires an argument!";
                     }
                 }
                 default -> {
+                    logger.fatal("Unknown argument: " + args[i]);
                     return "ERROR: Unknown argument: " + args[i];
                 }
             }
@@ -142,7 +165,6 @@ public class Main {
             return "ERROR: Either -input or -output must be specified!";
         }
 
-        // TODO: verify file paths
         return null;
     }
 }
