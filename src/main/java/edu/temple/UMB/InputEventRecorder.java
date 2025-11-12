@@ -10,8 +10,11 @@ import java.lang.annotation.Native;
 import java.security.Key;    
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class InputEventRecorder implements NativeKeyListener, NativeMouseInputListener {
+    private static final Logger logger = LogManager.getLogger(InputEventRecorder.class);
     private final List<KeyEvent> keyEvents = new ArrayList<>();
     private final List<MouseEvent> mouseEvents = new ArrayList<>();
     private boolean recording = true;
@@ -29,6 +32,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         try {
             return NativeKeyEvent.class.getField("VC_" + keyText.toUpperCase()).getInt(null);
         } catch (Exception e) {
+            logger.warn("Invalid stop key '{}'. Defaulting to ESCAPE. See JNativeHook constants for valid names.", keyText, e);
             System.out.println("Stop key codes are inputted as strings and resolved according to https://javadoc.io/static/com.1stleg/jnativehook/2.0.3/constant-values.html#org.jnativehook.keyboard.NativeKeyEvent.VC_N. For example, an input of NUM_LOCK will properly resolve to VC_NUM_LOCK, whereas NUMLOCK will fail and default to VC_ESCAPE.");
             return NativeKeyEvent.VC_ESCAPE;
         }
@@ -36,11 +40,12 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
     public void startRecording() throws Exception {
         // Turn off JNativeHook's internal logging to keep the console clean
-        java.util.logging.Logger logger =
+        java.util.logging.Logger jnhLogger =
                 java.util.logging.Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        logger.setLevel(java.util.logging.Level.OFF);
-        logger.setUseParentHandlers(false);
+        jnhLogger.setLevel(java.util.logging.Level.OFF);
+        jnhLogger.setUseParentHandlers(false);
 
+        logger.info("Registering native hooks and starting input recording");
         // Register the global key hook
         GlobalScreen.registerNativeHook();
         GlobalScreen.addNativeKeyListener(this);
@@ -58,11 +63,12 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         if (e.getKeyCode() == stopKeyCode) {
             try {
                 System.out.println("\n[Recorder] stop key pressed — stopping...");
+                logger.info("Stop key pressed. Unregistering native hook and stopping recording.");
                 GlobalScreen.unregisterNativeHook();
                 recording = false;
                 return;
             } catch (Exception ex) {
-                ex.printStackTrace();
+                logger.error("Failed to unregister native hook during stop", ex);
                 return;
             }
         }

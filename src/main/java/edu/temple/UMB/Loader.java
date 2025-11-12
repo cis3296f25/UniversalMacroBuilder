@@ -3,8 +3,11 @@ package edu.temple.UMB;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Loader {
+    private static final Logger logger = LogManager.getLogger(Loader.class);
     private File inFile;
 
     public Loader(File inFile) {
@@ -17,9 +20,12 @@ public class Loader {
     // It will need later parsing to work with java.awt.Robot. But that's a later problem.
     public LinkedHashMap<Long, String> loadJNativeEventsFromFile() throws FileNotFoundException {
         LinkedHashMap<Long, String> map = new LinkedHashMap<>();
+        logger.debug("Loading JNativeHook events from file: {}", inFile.getAbsolutePath());
         Scanner sc = new Scanner(inFile);
+        int lineCount = 0;
         while (sc.hasNextLine()) {
             String line = sc.nextLine();
+            lineCount++;
             if (line.equals("START KEY EVENTS")) {
                 // should be first line of file. skip
                 continue;
@@ -31,6 +37,7 @@ public class Loader {
             String[] parts = line.split(" ");
             map.put(Long.parseLong(parts[0]), parts[1] + "_" + parts[2]);
         }
+        logger.info("Loaded {} events from file {} ({} lines read)", map.size(), inFile.getAbsolutePath(), lineCount);
         return map;
     }
 
