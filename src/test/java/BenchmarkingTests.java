@@ -59,5 +59,13 @@ class BenchmarkingTests {
         // we will need to have them both start at exactly the same time, or the tests could be off. maybe use scheduled executor?
         // i will need to modify the key replayer. i need a way to prepare it, then start it at the same time like so
         Replayer replayer = new Replayer(predeterminedEventsFile.getAbsolutePath());
+        //replayer.ready()
+        //recorder.ready()
+        //ScheduledExecutorService syncExec = Executors.newSingleThreadScheduledExecutor();
+        //syncExec.schedule(() -> {
+        //    replayer.begin();
+        //    recorder.begin();
+        //}, 1, TimeUnit.SECONDS);
+        // then we can wait for execution and assert things and stuff
     }
 }
