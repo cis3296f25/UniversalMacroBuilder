@@ -5,18 +5,17 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
 
 /**
  * The {@code Replayer} class loads, translates, and replays recorded input events (currently keyboard events, with mouse support planned for future versions).
  */
 public class Replayer {
-    private static final Logger logger = LogManager.getLogger(Replayer.class);
     private File inFile;
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
     private static Map<Integer, Integer> jnativeToAwt = new HashMap<>();
@@ -37,35 +36,48 @@ public class Replayer {
         // load events from file
         try {
             loadedJNativeHookEvents = l.loadJNativeEventsFromFile();
-            logger.info("Loaded {} raw events from file {}", loadedJNativeHookEvents.size(), inFile.getAbsolutePath());
-            for (Long key : loadedJNativeHookEvents.keySet()) {
-                logger.debug("{} - {}", key, loadedJNativeHookEvents.get(key));
-            }
         } catch (Exception ex) {
-            logger.error("Failed to load events from file {}", inFile.getAbsolutePath(), ex);
+            ex.printStackTrace();
         }
 
         // translate those events to AWT events
         JNativeToAWT();
 
         // debug print
-        logger.info("Translated to {} AWT events",  AWTEvents.size());
+        System.out.println("Loaded JNativeHook events from file and translated to AWTEvents (below)");
         for (Long key : AWTEvents.keySet()) {
-            logger.debug("{} {} {}", key, AWTEvents.get(key).context, AWTEvents.get(key).event);
+            System.out.println(key + " " + AWTEvents.get(key).context + " " + AWTEvents.get(key).event);
         }
 
-        logger.info("Beginning replay of {} AWT events", AWTEvents.size());
         // instantiate the KeyReplayer and replay events
         kr = new KeyReplayer(AWTEvents);
         kr.start();
         kr.scheduler.shutdown();
 
+        // start a listener thread to stop replay with ESCAPE key
+        new Thread(() -> {
+            // scanner reads input from the terminal
+            Scanner scanner = new Scanner(System.in);
+            // lets the user know how to stop the replayer
+            System.out.println("[INFO] Press ENTER to stop replay early...");
+            // waits for the user to press enter 
+            scanner.nextLine();
+            // flag stopping the scheduler
+            kr.stopReplay();
+        }).start();
+
+        // wait for KeyReplayer's scheduler to finish all scheduled tasks
+        // or until 10 min have passed to stop immediate exit of the program
+        try {
+            kr.scheduler.awaitTermination(10, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         // wait for KeyReplayer thread to exit
         try {
             kr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
-            logger.info("Replay finished");
         } catch (InterruptedException e) {
-            logger.error("Replay interrupted", e);
             throw new RuntimeException(e);
         }
     }
@@ -172,14 +184,16 @@ public class Replayer {
                 int code = Integer.parseInt(parts[1]);
                 Integer awtCode = jnativeToAwt.get(code);
                 if (awtCode == null) {
-                    logger.warn("Unmapped key code encountered: {}", code);
+                    System.out.println("Key not found: " + code);
                     continue; // skip unknown keys
                 }
 
                 AWTReplayEvent event = new AWTReplayEvent(parts[0], awtCode);
                 AWTEvents.put(key, event);
             } catch (Exception e) {
-                logger.error("Failed to translate key: {}", parts.length > 1 ? parts[1] : "<unknown>", e);
+                System.out.println("Key not found: " + parts[1]);
+                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
         }
     }

@@ -7,6 +7,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.github.kwhat.jnativehook.GlobalScreen;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 /**
  * This {@code KeyReplayer} class is responsible for replaying a sequence of {@link AWTReplayEvent}s at designated timestamps.
@@ -23,6 +26,12 @@ public class KeyReplayer {
     private final long startTime = System.currentTimeMillis();
     // the (lazy instantiation) of the Robot class to be used for actual replay
     private Robot robot;
+
+    // default stop key
+    private int stopKeyCode = NativeKeyEvent.VC_ESCAPE; 
+    // flag to indicate if replay should be stopped
+    private volatile boolean stopped = false;
+
 
     /**
      * Constructs an instance of {@code KeyReplayer} with the specified event sequence.
@@ -61,12 +70,21 @@ public class KeyReplayer {
      * @param event the {@link AWTReplayEvent} to execute
      */
     private void executeEvent(AWTReplayEvent event) {
+        if (stopped) return;
         logger.debug("Executing {} with code {}", event.context, event.event);
         if (event.context.equals("PRESSED")) {
             robot.keyPress(event.event);
         } else if (event.context.equals("RELEASED")) {
             robot.keyRelease(event.event);
         }
+    }
+
+    // stops the replay immediately
+    public void stopReplay() {
+        stopped = true;
+        scheduler.shutdownNow();
+        logger.info("Replay stopped by user.");
+        System.out.println("[INFO] Replay stopped by user.");
     }
 }
 
