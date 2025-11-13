@@ -12,6 +12,8 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import static java.lang.Thread.sleep;
+
 /**
  * The {@code Replayer} class loads, translates, and replays recorded input events (currently keyboard events, with mouse support planned for future versions).
  */
@@ -60,5 +62,12 @@ public class Replayer {
             logger.error("Replay interrupted", e);
             throw new RuntimeException(e);
         }
+    }
+
+    public void startAt(long startTime)  {
+        while (System.nanoTime() >=  startTime) {
+            continue;
+        }
+        this.start();
     }
 }

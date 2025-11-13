@@ -41,5 +41,12 @@ public class Recorder {
             logger.error("Error during recording or writing to file {}", outPath.getAbsolutePath(), e);
         }
     }
+
+    public void startAt(long startTime)  {
+        while (System.nanoTime() >=  startTime) {
+            continue;
+        }
+        this.start();
+    }
 }
 
