@@ -1,15 +1,16 @@
-import edu.temple.UMB.KeyReplayer;
+import edu.temple.UMB.Loader;
 import edu.temple.UMB.Recorder;
 import edu.temple.UMB.Replayer;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.concurrent.*;
 
 // allows before all annotation to be non-static, see https://docs.junit.org/current/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.Lifecycle.html
@@ -18,30 +19,32 @@ class BenchmarkingTests {
     // TODO: test fast keyboard inputs (and mouse!)
     private final String predeterminedEvents = """
 START KEY EVENTS
-705 PRESSED 30
-815 RELEASED 30
-927 PRESSED 31
-1035 RELEASED 31
-1420 PRESSED 32
-1555 RELEASED 32
-1748 PRESSED 33
-1854 RELEASED 33
-2935 PRESSED 1
-3035 RELEASED 1
+756 PRESSED 30
+798 PRESSED 31
+867 PRESSED 32
+949 RELEASED 30
+957 PRESSED 33
+973 RELEASED 31
+1009 RELEASED 32
+1057 RELEASED 33
+1250 PRESSED 1
+1325 RELEASED 1
 END KEY EVENTS
 START MOUSE EVENTS
 END MOUSE EVENTS
-EOF""";
-    private String tmpDirPath = "./tmp_testing_dir";
+EOF
+""";
+    private String tmpDirPath = "tmp_testing_dir";
     private File tmpDirFile = null;
-    private String prederminedEventsPath = tmpDirPath + "/predeterminedEvents.txt";
+    private String predeterminedEventsPath = tmpDirPath + "/predeterminedEvents.txt";
     private File predeterminedEventsFile = null;
 
     private String tmpRecorderOutPath = tmpDirPath + "/tmpRecorderOutput.txt";
 
-    // the goal of this class is to have tests that can provide quantitative performance benchmarking.
-    // we will make a replayer class to schedule some predertimed invents at specified times.
-    // then we can make a recorder class to record those events and compare the timestamps.
+
+    // with this we can guarantee under 50ms mean absolute difference and under 5ms mean absolute gap (the correctness of inter-event spacing)
+    Long MAD_CUTOFF = 50L;
+    Long MAG_CUTOFF = 5L;
 
     @BeforeAll
     void init() throws RuntimeException, IOException {
@@ -49,12 +52,12 @@ EOF""";
         // check if the tmp dir exists, create if not
         tmpDirFile = new File(tmpDirPath);
         if (!tmpDirFile.exists()) {
-            if (!tmpDirFile.mkdir()) {
+            if (!tmpDirFile.mkdirs()) {
                 throw new RuntimeException("Unable to create tmp directory");
             }
         }
         // check if file exists, create if not
-        predeterminedEventsFile = new File(prederminedEventsPath);
+        predeterminedEventsFile = new File(predeterminedEventsPath);
         if (!predeterminedEventsFile.exists()) {
             if (!predeterminedEventsFile.createNewFile()) {
                 throw new RuntimeException("Unable to create predetermined events file");
@@ -67,16 +70,16 @@ EOF""";
     @AfterAll
     void cleanup() throws IOException {
         // delete our tmp file and dir
-        // Files.deleteIfExists(Paths.get(predeterminedEventsFile.getAbsolutePath()));
-        // Files.deleteIfExists(Paths.get(tmpDirFile.getAbsolutePath()));
+        Files.deleteIfExists(Paths.get(tmpRecorderOutPath));
+        Files.deleteIfExists(predeterminedEventsFile.toPath());
+        Files.deleteIfExists(tmpDirFile.toPath());
     }
 
     @Test
-    void benchmarkRecording() throws InterruptedException {
+    void benchmark() throws InterruptedException {
         File out = new File(tmpRecorderOutPath);
         // so now we need to set up a replayer, feed it the predetermined events, then set up a recorder.
-        // we will need to have them both start at exactly the same time, or the tests could be off. maybe use scheduled executor?
-        // i will need to modify the key replayer. i need a way to prepare it, then start it at the same time like so
+        // latch allows us to countdown to execution, getting pretty perfect execution times
         Replayer replayer = new Replayer(predeterminedEventsFile.getAbsolutePath());
         Recorder recorder = new Recorder(out, "ESCAPE");
         ExecutorService exec = Executors.newFixedThreadPool(2);
@@ -107,6 +110,54 @@ EOF""";
         exec.shutdown();
         exec.awaitTermination(15, TimeUnit.SECONDS);
 
-        //asdf
+        // now we can parse our out file and get some stats from it.
+        // there will be some difference in overall timestamps (probably around 50-200ms) due to differences in startup overhead (despite our best efforts to reduce this).
+        // that's an important stat, but we really care about variance, or the average gap betweens two events.
+        // we can actually just use our loader classes to load the out file
+        Loader l =  new Loader(out);
+        LinkedHashMap<Long, String> recordedEvents;
+        try {
+            recordedEvents = l.loadJNativeEventsFromFile();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        ArrayList<Long> recordedTS = new ArrayList<>(recordedEvents.keySet());
+
+        // we could just manually parse through the predetermined events string or we can have loader do it for us.
+        // need to always remove the last two events of predTS as theyre for the exit escape key and wont get recorded
+        l = new Loader(predeterminedEventsFile);
+        LinkedHashMap<Long, String> predEvents;
+        try {
+            predEvents = l.loadJNativeEventsFromFile();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        ArrayList<Long> predTS = new ArrayList<>(predEvents.keySet());
+        predTS.removeLast();
+        predTS.removeLast();
+
+        System.out.println("Predetermined events timestamps: " + predTS);
+        System.out.println("Recorded events timestamps: " + recordedTS);
+
+        // and now we can compare
+        // first stat we want is the mean absolute difference between each. this is most likely overhead, and shouldnt matter too much
+        // we will also want to look at the mean absolute gap to observe that the inter-event recording is being preserved (which is much more important than the MAD anyways.
+        long madRunning = 0L;
+        long magRunning = 0L;
+        for (int i = 0; i < recordedTS.size(); i++) {
+            madRunning += Math.abs(predTS.get(i) - recordedTS.get(i));
+            if (i == 0) { continue; }
+            long predGap = predTS.get(i) - predTS.get(i - 1);
+            long recGap  = recordedTS.get(i) - recordedTS.get(i - 1);
+            magRunning += Math.abs(predGap - recGap);
+        }
+        long mad = madRunning / recordedTS.size();
+        long mag = magRunning / (recordedTS.size() - 1);
+        System.out.println("Mean Absolute Difference: " + mad);
+        System.out.println("Mean Absolute Gap: " + mag);
+
+        // some hard limits on timings that we should always pass
+        assertTrue(mad < MAD_CUTOFF);
+        assertTrue(mag < MAG_CUTOFF);
     }
 }
