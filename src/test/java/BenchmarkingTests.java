@@ -159,5 +159,7 @@ EOF
         // some hard limits on timings that we should always pass
         assertTrue(mad < MAD_CUTOFF);
         assertTrue(mag < MAG_CUTOFF);
+
+        // TODO: if were feeling nice, make a custom macro here and feed it to a new replayer that just holds backspace for like a second to get rid of stuff typed above
     }
 }
