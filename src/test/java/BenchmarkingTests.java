@@ -10,10 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 // allows before all annotation to be non-static, see https://docs.junit.org/current/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.Lifecycle.html
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -82,17 +79,34 @@ EOF""";
         // i will need to modify the key replayer. i need a way to prepare it, then start it at the same time like so
         Replayer replayer = new Replayer(predeterminedEventsFile.getAbsolutePath());
         Recorder recorder = new Recorder(out, "ESCAPE");
-        ScheduledExecutorService exec = Executors.newScheduledThreadPool(2);
+        ExecutorService exec = Executors.newFixedThreadPool(2);
+        CountDownLatch latch = new CountDownLatch(1);
 
-        long delay = 2; // seconds
-        long startTime = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        exec.submit(() -> {
+            try {
+                latch.await();  // both wait for signal
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            replayer.start();
+        });
 
-        exec.schedule(() -> replayer.startAt(startTime), 0, TimeUnit.SECONDS);
-        exec.schedule(() -> recorder.startAt(startTime), 0, TimeUnit.SECONDS);
+        exec.submit(() -> {
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            recorder.start();
+        });
+
+        // synchronize start
+        latch.countDown();
 
         // wait long enough for both to finish
         exec.shutdown();
         exec.awaitTermination(15, TimeUnit.SECONDS);
-        // then we can wait for execution and assert things and stuff
+
+        //asdf
     }
 }

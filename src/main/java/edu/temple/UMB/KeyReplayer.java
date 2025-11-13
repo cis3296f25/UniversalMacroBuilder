@@ -29,7 +29,6 @@ public class KeyReplayer {
     // the scheduler we will use to enable accurate playback. TODO: make this private and have this class auto terminate after last event
     public final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     // system time when replay was started
-    private final long startTime = System.currentTimeMillis();
     // the (lazy instantiation) of the Robot class to be used for actual replay
     private Robot robot;
 
@@ -64,7 +63,7 @@ public class KeyReplayer {
      */
     public void start() {
         for (Long key : awtEvents.keySet()) {
-            long delay = key - (System.currentTimeMillis() - startTime);
+            long delay = key;
             if (delay < 0) delay = 0;
             scheduler.schedule(() -> executeEvent(awtEvents.get(key)), delay, TimeUnit.MILLISECONDS);
         }
