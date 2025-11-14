@@ -33,7 +33,7 @@ public class MouseLoader {
             }
             // parse line and add to map
             String[] parts = line.split(" ");
-            map.put(Long.parseLong(parts[0]), parts[1] + "_" + parts[2] + "_" + parts[3]);
+            map.put(Long.parseLong(parts[0]), parts[1] + "-" + parts[2] + "-" + parts[3]);
         }
         logger.info("Loaded {} mouse events from file {} ({} lines read)", map.size(), inFile.getAbsolutePath(), lineCount);
         return map;

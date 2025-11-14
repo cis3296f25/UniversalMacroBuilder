@@ -67,17 +67,17 @@ public class Replayer {
         JNativeToAWT();
 
         // debug print
-        logger.info("Translated to {} AWT events",  AWTKeyEvents.size());
+        logger.info("Translated to {} AWT Key events",  AWTKeyEvents.size());
         for (Long key : AWTKeyEvents.keySet()) {
             logger.debug("{} {} {}", key, AWTKeyEvents.get(key).context, AWTKeyEvents.get(key).event);
         }
 
-        logger.info("Translated to {} AWT events",  AWTMouseEvents.size());
+        logger.info("Translated to {} AWT Mouse events",  AWTMouseEvents.size());
         for (Long key : AWTMouseEvents.keySet()) {
             logger.debug("{} {} {}", key, AWTMouseEvents.get(key).context, AWTMouseEvents.get(key).button);
         }
 
-        logger.info("Beginning replay of {} AWT events", AWTKeyEvents.size());
+        logger.info("Beginning replay of {} AWT Key events", AWTKeyEvents.size());
         // instantiate the KeyReplayer and replay events
         kr = new KeyReplayer(AWTKeyEvents);
         kr.start();
@@ -215,7 +215,7 @@ public class Replayer {
         }
 
         for (Long key : loadedJNativeHookMouseEvents.keySet()) {
-            String[] parts = loadedJNativeHookMouseEvents.get(key).split("_");
+            String[] parts = loadedJNativeHookMouseEvents.get(key).split("-");
             try {
                 int code = Integer.parseInt(parts[2]);
                 Integer awtCode = jnativeToAwtMouse.get(code);
