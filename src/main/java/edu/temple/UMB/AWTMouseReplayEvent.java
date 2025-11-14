@@ -2,13 +2,13 @@ package edu.temple.UMB;
 
 public class AWTMouseReplayEvent {
     String context;
-    int event;
     int x;
     int y;
-    AWTMouseReplayEvent(String context, int event, int x, int y) {
+    int button;
+    AWTMouseReplayEvent(String context, int x, int y, int button) {
         this.context = context;
-        this.event = event;
         this.x = x;
         this.y = y;
+        this.button = button;
     }
 }

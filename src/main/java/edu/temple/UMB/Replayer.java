@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
+import com.github.kwhat.jnativehook.mouse.NativeMouseEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,7 +22,9 @@ public class Replayer {
     private LinkedHashMap<Long, String> loadedJNativeHookKeyEvents = new LinkedHashMap<>();
     private LinkedHashMap<Long, String> loadedJNativeHookMouseEvents = new LinkedHashMap<>();
     private static Map<Integer, Integer> jnativeToAwt = new HashMap<>();
-    private LinkedHashMap<Long, AWTKeyReplayEvent> AWTEvents = new LinkedHashMap<>();
+    private static Map<Integer, Integer> jnativeToAwtMouse = new HashMap<>();
+    private LinkedHashMap<Long, AWTKeyReplayEvent> AWTKeyEvents = new LinkedHashMap<>();
+    private LinkedHashMap<Long, AWTMouseReplayEvent> AWTMouseEvents = new LinkedHashMap<>();
     KeyLoader kl;
     MouseLoader ml;
     KeyReplayer kr;
@@ -63,14 +67,19 @@ public class Replayer {
         JNativeToAWT();
 
         // debug print
-        logger.info("Translated to {} AWT events",  AWTEvents.size());
-        for (Long key : AWTEvents.keySet()) {
-            logger.debug("{} {} {}", key, AWTEvents.get(key).context, AWTEvents.get(key).event);
+        logger.info("Translated to {} AWT events",  AWTKeyEvents.size());
+        for (Long key : AWTKeyEvents.keySet()) {
+            logger.debug("{} {} {}", key, AWTKeyEvents.get(key).context, AWTKeyEvents.get(key).event);
         }
 
-        logger.info("Beginning replay of {} AWT events", AWTEvents.size());
+        logger.info("Translated to {} AWT events",  AWTMouseEvents.size());
+        for (Long key : AWTMouseEvents.keySet()) {
+            logger.debug("{} {} {}", key, AWTMouseEvents.get(key).context, AWTMouseEvents.get(key).button);
+        }
+
+        logger.info("Beginning replay of {} AWT events", AWTKeyEvents.size());
         // instantiate the KeyReplayer and replay events
-        kr = new KeyReplayer(AWTEvents);
+        kr = new KeyReplayer(AWTKeyEvents);
         kr.start();
         kr.scheduler.shutdown();
 
@@ -170,6 +179,14 @@ public class Replayer {
         jnativeToAwt.put(NativeKeyEvent.VC_INSERT, KeyEvent.VK_INSERT);
         jnativeToAwt.put(NativeKeyEvent.VC_DELETE, KeyEvent.VK_DELETE);
         jnativeToAwt.put(NativeKeyEvent.VC_ESCAPE, KeyEvent.VK_ESCAPE);
+
+        //Mouse Events
+        jnativeToAwtMouse.put(NativeMouseEvent.NOBUTTON, MouseEvent.NOBUTTON);
+        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON1, MouseEvent.BUTTON1);
+        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON2, MouseEvent.BUTTON2);
+        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON3, MouseEvent.BUTTON3);
+
+
     }
 
 
@@ -191,9 +208,28 @@ public class Replayer {
                 }
 
                 AWTKeyReplayEvent event = new AWTKeyReplayEvent(parts[0], awtCode);
-                AWTEvents.put(key, event);
+                AWTKeyEvents.put(key, event);
             } catch (Exception e) {
                 logger.error("Failed to translate key: {}", parts.length > 1 ? parts[1] : "<unknown>", e);
+            }
+        }
+
+        for (Long key : loadedJNativeHookMouseEvents.keySet()) {
+            String[] parts = loadedJNativeHookMouseEvents.get(key).split("_");
+            try {
+                int code = Integer.parseInt(parts[2]);
+                Integer awtCode = jnativeToAwtMouse.get(code);
+                if (awtCode == null) {
+                    logger.warn("Unmapped key code encountered: {}", code);
+                    continue; // skip unknown keys
+                }
+                int x = Integer.parseInt(parts[1].split(",", 2)[0]);
+                int y = Integer.parseInt(parts[1].split(",", 2)[1]);
+
+                AWTMouseReplayEvent event = new AWTMouseReplayEvent(parts[0], x, y, awtCode);
+                AWTMouseEvents.put(key, event);
+            } catch (Exception e) {
+                logger.error("Failed to translate key: {}", parts.length > 1 ? parts[2] : "<unknown>", e);
             }
         }
     }

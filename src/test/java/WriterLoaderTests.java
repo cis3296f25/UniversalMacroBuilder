@@ -98,6 +98,8 @@ class WriterLoaderTests {
                 "100 PRESS A",
                 "200 RELEASE A",
                 "END KEY EVENTS",
+                "START MOUSE EVENTS",
+                "END MOUSE EVENTS",
                 "EOF"
         ));
 

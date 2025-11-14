@@ -114,11 +114,11 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
         long delta = now - firstEventTime;
 
-        mouseEvents.add(new MouseEvent(delta, e, "MOUSE_PRESSED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE-PRESSED"));
 
         // ✅ Print what the user types live in the terminal
         String eventText = e.paramString();
-        printMouseEventToTerminal("MOUSE_PRESSED: " + eventText);
+        printMouseEventToTerminal("MOUSE-PRESSED: " + eventText);
 
 
     }
@@ -131,10 +131,10 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         }
         long delta = now - firstEventTime;
 
-        mouseEvents.add(new MouseEvent(delta, e, "MOUSE_RELEASED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE-RELEASED"));
 
         String eventText = e.paramString();
-        printMouseEventToTerminal("MOUSE_RELEASED: " + eventText);
+        printMouseEventToTerminal("MOUSE-RELEASED: " + eventText);
     }
 
     @Override public void nativeMouseClicked(NativeMouseEvent e) {}
@@ -147,9 +147,9 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         }
         long delta = now - firstEventTime;
 
-        mouseEvents.add(new MouseEvent(delta, e, "MOUSE_DRAGGED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE-DRAGGED"));
         String eventText = e.paramString();
-        printMouseEventToTerminal("MOUSE_DRAGGED: " + eventText);
+        printMouseEventToTerminal("MOUSE-DRAGGED: " + eventText);
     }
 
     @Override
@@ -160,9 +160,9 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         }
         long delta = now - firstEventTime;
 
-        mouseEvents.add(new MouseEvent(delta, e, "MOUSE_MOVED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE-MOVED"));
         String eventText = e.paramString();
-        printMouseEventToTerminal("MOUSE_MOVED: " + eventText);
+        printMouseEventToTerminal("MOUSE-MOVED: " + eventText);
     }
 
 
