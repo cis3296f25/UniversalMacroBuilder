@@ -50,6 +50,7 @@ public class Writer {
                 writer.write("EOF\n");
             }
             logger.debug("Finished writing {} events of type {}", events.size(), type.name());
+            writer.flush();
         } catch (IOException ex) {
             logger.error("Failed to write {} events of type {} to {}", events.size(), type.name(), path.getAbsolutePath(), ex);
             throw ex;

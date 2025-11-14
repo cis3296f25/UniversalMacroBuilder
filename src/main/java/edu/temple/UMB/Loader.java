@@ -41,6 +41,7 @@ public class Loader {
                 continue;
             } else if (line.equals("END KEY EVENTS")) {
                 // finished keyEvents. our job here is done
+                sc.close();
                 break;
             }
             // parse line and add to map
