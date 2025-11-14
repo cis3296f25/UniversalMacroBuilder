@@ -1,77 +1,106 @@
 @startuml
+skinparam classAttributeIconSize 0
+
 class Main {
-    ' takes in command line args to either start recording threads or start the robot reproducer
-    + String: in_file_str
-    + String: out_file_str
-    + argChecks(args[]: String)
+  + out_file_str: String
+  + in_file_str: String
+  + stopKey: String
+  + listMacrosFlag: boolean
+  + main(args: String[]): void
+  + argChecks(args: String[]): String
+  + listMacros(macroDir: File): void
+  + promptUserForMacro(macroDir: File): File
 }
 
 class Recorder {
-    ' this class simply starts and synchronizes the keyboard and mouse event recorders
-    outpath: File
+  - outPath: File
+  - inputEventRecorder: InputEventRecorder
+  + Recorder(outPath: File, stopKey: String)
+  + start(): void
 }
 
-class Replayer implements Robot {
-    inpath: File
+class Replayer {
+  - inFile: File
+  - loadedJNativeHookEvents: LinkedHashMap<Long, String>
+  - l: Loader
+  - kr: KeyReplayer
+  + Replayer(inPath: String)
+  + start(): void
 }
 
-class KeyboardReplayer extends Replayer {
+class KeyReplayer {
+  - awtEvents: LinkedHashMap<Long, AWTReplayEvent>
+  + scheduler: ScheduledExecutorService
+  + KeyReplayer(loadedJNativeHookEvents: LinkedHashMap<Long, String>)
+  + start(): void
 }
 
-class MouseReplayer extends Replayer
+class AWTReplayEvent {
+  - context: String
+  - event: int
+}
 
 class Writer {
-    type: enum {"MOUSE", "KEY"}
-    writeToFile(outpath): void
+  + enum Type { MOUSE, KEY }
+  - type: Type
+  + Writer(type: Type)
+  + writeToFile(path: File, events: List<Event>): void
 }
 
 class Loader {
-    type: enum {"MOUSE", "KEY"}
-    loadFromPath(inpath): Array<Event>
+  - inFile: File
+  + Loader(inFile: File)
+  + loadJNativeEventsFromFile(): LinkedHashMap<Long, String>
 }
 
-
-class KeyboardEventRecorder implements NativeKeyListener {
-    ' this thread will record keyboard input and save the input to an arraylist of keyevent. may potentially need multithreading and syncronization to allow multiple key presses to be recorded at the same time?
-    - ArrayList<KeyEvent>: keyEvents
-}
-
-class MouseEventRecorder implements NativeMouseInputListener {
-    ' this thread will record mouse input similarly to the keyboard recorder
-    - ArrayList<MouseEvent>: mouseEvent
+class InputEventRecorder implements NativeKeyListener, NativeMouseInputListener {
+  - keyEvents: List<KeyEvent>
+  - mouseEvents: List<MouseEvent>
+  - recording: boolean
+  - firstEventTime: long
+  - stopKeyCode: int
+  + InputEventRecorder(stopKeyName: String)
+  + startRecording(): void
+  + getKeyEvents(): List<KeyEvent>
+  + getMouseEvents(): List<MouseEvent>
+  + isRecording(): boolean
 }
 
 class Event {
-    - delta: long
-    + getDelta(): long
-
+  - delta: long
+  + Event(delta: long)
+  + getDelta(): long
 }
+
 class KeyEvent extends Event {
-    - delta: long
-    - event: NativeKeyEvent
-    + getDelta(): long
-    + getEvent(): NativeKeyEvent
+  - event: NativeKeyEvent
+  - context: String
+  + KeyEvent(delta: long, event: NativeKeyEvent, context: String)
+  + getEvent(): NativeKeyEvent
+  + toString(): String
 }
 
 class MouseEvent extends Event {
-    - delta: long
-    - event: NativeMouseEvent
-    + getDelta(): long
-    + getEvent(): NativeMouseEvent
+  - event: NativeMouseEvent
+  - context: String
+  + MouseEvent(delta: long, event: NativeMouseEvent, context: String)
+  + getNativeMouseEvent(): NativeMouseEvent
+  + toString(): String
 }
 
 Main --> Recorder
-Recorder --> MouseEventRecorder
-Recorder --> KeyboardEventRecorder
-MouseEventRecorder --> MouseEvent
-KeyboardEventRecorder --> KeyEvent
 Main --> Replayer
-
-KeyboardReplayer --> Loader
-MouseReplayer --> Loader
-
-KeyboardEventRecorder --> Writer
-MouseEventRecorder --> Writer
-
+Recorder *-- InputEventRecorder
+Recorder ..> Writer
+InputEventRecorder o-- KeyEvent
+InputEventRecorder o-- MouseEvent
+Replayer *-- Loader
+Replayer *-- KeyReplayer
+KeyReplayer *-- AWTReplayEvent
+Writer ..> Event
+interface NativeKeyListener
+interface NativeMouseInputListener
+InputEventRecorder ..|> NativeKeyListener
+InputEventRecorder ..|> NativeMouseInputListener
 
 @enduml
