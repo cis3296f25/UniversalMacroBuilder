@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 public class Recorder {
     private static final Logger logger = LogManager.getLogger(Recorder.class);
     private final File outPath;
-    //private final KeyboardEventRecorder keyboardRecorder;
     private final InputEventRecorder inputEventRecorder;
 
 
@@ -41,6 +40,13 @@ public class Recorder {
         } catch (Exception e) {
             logger.error("Error during recording or writing to file {}", outPath.getAbsolutePath(), e);
         }
+    }
+
+    public void startAt(long startTime)  {
+        while (System.nanoTime() >=  startTime) {
+            continue;
+        }
+        this.start();
     }
 }
 

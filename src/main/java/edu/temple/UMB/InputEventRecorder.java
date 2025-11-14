@@ -13,11 +13,13 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import static java.lang.Thread.sleep;
+
 public class InputEventRecorder implements NativeKeyListener, NativeMouseInputListener {
     private static final Logger logger = LogManager.getLogger(InputEventRecorder.class);
     private final List<KeyEvent> keyEvents = new ArrayList<>();
     private final List<MouseEvent> mouseEvents = new ArrayList<>();
-    private boolean recording = true;
+    private boolean recording;
     private long firstEventTime = -1;
     private final int stopKeyCode;
     
@@ -29,6 +31,12 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
     // Helper method to convert the stop key to JNativeHook key code
     private int keyTextToJNative(String keyText) {
+        // Turn off JNativeHook's internal logging to keep the console clean
+        java.util.logging.Logger jnhLogger =
+                java.util.logging.Logger.getLogger(GlobalScreen.class.getPackage().getName());
+        jnhLogger.setLevel(java.util.logging.Level.OFF);
+        jnhLogger.setUseParentHandlers(false);
+
         try {
             return NativeKeyEvent.class.getField("VC_" + keyText.toUpperCase()).getInt(null);
         } catch (Exception e) {
@@ -39,26 +47,17 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
     }
 
     public void startRecording() throws Exception {
-        // Turn off JNativeHook's internal logging to keep the console clean
-        java.util.logging.Logger jnhLogger =
-                java.util.logging.Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        jnhLogger.setLevel(java.util.logging.Level.OFF);
-        jnhLogger.setUseParentHandlers(false);
-
         logger.info("Registering native hooks and starting input recording");
-        // Register the global key hook
         GlobalScreen.registerNativeHook();
         GlobalScreen.addNativeKeyListener(this);
         GlobalScreen.addNativeMouseListener(this);
         GlobalScreen.addNativeMouseMotionListener(this);
+        recording = true;
+        firstEventTime = System.currentTimeMillis();
     }
 
     @Override
     public void nativeKeyPressed(NativeKeyEvent e) {
-        long now = System.currentTimeMillis();
-        if (firstEventTime == -1){
-            firstEventTime = now;
-        }
         // Press ESC to stop recording (before adding it to array)
         if (e.getKeyCode() == stopKeyCode) {
             try {
@@ -73,11 +72,11 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
             }
         }
 
-        long delta = now - firstEventTime;
+        long delta = System.currentTimeMillis() - firstEventTime;
 
         keyEvents.add(new KeyEvent(delta, e, "PRESSED"));
 
-        // ✅ Print what the user types live in the terminal
+        // Print what the user types live in the terminal
         String keyText = NativeKeyEvent.getKeyText(e.getKeyCode());
         printKeyToTerminal("PRESSED: " + keyText);
 
@@ -85,15 +84,12 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
     }
 
     @Override public void nativeKeyReleased(NativeKeyEvent e) {
-        long now = System.currentTimeMillis();
-        if (firstEventTime == -1){
-            firstEventTime = now;
-            if (e.getKeyCode() == NativeKeyEvent.VC_ENTER) {
-                // we actually just skip this here because it will almost always be the user releasing the enter key
-                return;
-            }
+
+        long delta = System.currentTimeMillis() - firstEventTime;
+        if (e.getKeyCode() == NativeKeyEvent.VC_ENTER && delta > 10) {
+            // assume this is the first enter key release due to keycode and timestamp
+            return;
         }
-        long delta = now - firstEventTime;
 
         keyEvents.add(new KeyEvent(delta, e, "RELEASED"));
 
@@ -105,31 +101,19 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
     @Override
     public void nativeMousePressed(NativeMouseEvent e) {
-        long now = System.currentTimeMillis();
-        if (firstEventTime == -1){
-            firstEventTime = now;
-        }
-        // Press ESC to stop recording (before adding it to array)
 
-
-        long delta = now - firstEventTime;
+        long delta = System.currentTimeMillis() - firstEventTime;
 
         mouseEvents.add(new MouseEvent(delta, e, "MOUSE PRESSED"));
 
-        // ✅ Print what the user types live in the terminal
+        // Print what the user types live in the terminal
         String eventText = e.paramString();
         printMouseEventToTerminal("MOUSE PRESSED: " + eventText);
-
-
     }
 
     @Override
     public void nativeMouseReleased(NativeMouseEvent e) {
-        long now = System.currentTimeMillis();
-        if (firstEventTime == -1){
-            firstEventTime = now;
-        }
-        long delta = now - firstEventTime;
+        long delta = System.currentTimeMillis() - firstEventTime;
 
         mouseEvents.add(new MouseEvent(delta, e, "MOUSE RELEASED"));
 
@@ -141,12 +125,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
     @Override
     public void nativeMouseDragged(NativeMouseEvent e) {
-        long now = System.currentTimeMillis();
-        if (firstEventTime == -1){
-            firstEventTime = now;
-        }
-        long delta = now - firstEventTime;
-
+        long delta = System.currentTimeMillis() - firstEventTime;
         mouseEvents.add(new MouseEvent(delta, e, "MOUSE DRAGGED"));
         String eventText = e.paramString();
         printMouseEventToTerminal("MOUSE DRAGGED: " + eventText);
@@ -154,11 +133,7 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
     @Override
     public void nativeMouseMoved(NativeMouseEvent e) {
-        long now = System.currentTimeMillis();
-        if (firstEventTime == -1){
-            firstEventTime = now;
-        }
-        long delta = now - firstEventTime;
+        long delta = System.currentTimeMillis() - firstEventTime;
 
         mouseEvents.add(new MouseEvent(delta, e, "MOUSE MOVED"));
         String eventText = e.paramString();
