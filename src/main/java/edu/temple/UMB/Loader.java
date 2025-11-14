@@ -6,18 +6,28 @@ import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Loads recorded JNativeHook key events from a text file into an ordered map.
+ */
 public class Loader {
     private static final Logger logger = LogManager.getLogger(Loader.class);
     private File inFile;
 
+    /**
+     * Creates a loader for the given input file.
+     * @param inFile file containing recorded events
+     */
     public Loader(File inFile) {
         this.inFile = inFile;
     }
 
-    // Note that this function does not actually do any form of error handling.
-    // It is expected that the checking of file for existence/permissions is done in Main.argChecks().
-    // It returns a LinkedHashMap (for later iteration over), where the key is a long (timestamp) and the string is <action>_KEY.
-    // It will need later parsing to work with java.awt.Robot. But that's a later problem.
+    /**
+     * Parses the input file into a {@link LinkedHashMap} of timestamps to event strings.
+     * The returned value maps {@code <timestamp>} to {@code <ACTION>_<KEYCODE>} as read from the file.
+     * This method assumes basic file correctness; callers should validate existence and permissions in {@link Main#argChecks(String[])}.
+     * @return ordered map of timestamps to event tokens
+     * @throws FileNotFoundException if the input file cannot be opened
+     */
     public LinkedHashMap<Long, String> loadJNativeEventsFromFile() throws FileNotFoundException {
         LinkedHashMap<Long, String> map = new LinkedHashMap<>();
         logger.debug("Loading JNativeHook events from file: {}", inFile.getAbsolutePath());

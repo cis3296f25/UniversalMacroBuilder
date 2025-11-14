@@ -3,6 +3,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link edu.temple.UMB.Main#argChecks(String[])}.
+ */
 public class MainTests {
 
     @BeforeEach

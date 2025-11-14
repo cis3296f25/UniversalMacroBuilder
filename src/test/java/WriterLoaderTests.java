@@ -9,6 +9,9 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for writing event files and loading them back into memory.
+ */
 class WriterLoaderTests {
 
 

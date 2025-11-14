@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.concurrent.*;
 
+/**
+ * Benchmarks end-to-end record and replay timing characteristics.
+ */
 // allows before all annotation to be non-static, see https://docs.junit.org/current/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.Lifecycle.html
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BenchmarkingTests {

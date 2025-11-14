@@ -10,6 +10,9 @@ import org.apache.logging.log4j.LogManager;
 
 import static java.lang.System.exit;
 
+/**
+ * Entry point for UniversalMacroBuilder. Parses command-line arguments and starts recording or replaying macros.
+ */
 public class Main {
 
     private static final Logger logger = LogManager.getLogger(Main.class);
@@ -23,6 +26,9 @@ public class Main {
     public static boolean listMacrosFlag = false;
     private static final String MACRO_FOLDER_NAME = "macros";
 
+    /**
+     * Application entry point.
+     */
     public static void main(String[] args) throws InterruptedException, AWTException, Exception {
         logger.info("Starting UMB.");
         //check if macro dir exists
@@ -132,15 +138,14 @@ public class Main {
     }
 
     /**
-     * Checks args given to ensure the following:
-     * <ul>
-     * <li> Either input or output is given.</li>
-     * <li> After either input or output must be a filename.
-     * <li> Both input and output may not be given.</li>
-     * <li> No unknown arguments are given.</li>
-     * </ul>
-     * @param args: The command line arguments to check for validity.
-     * @return Null if all checks are successful, else an error message for the caller to throw with IllegalArgumentException.
+     * Validates command-line arguments.
+     * Rules:
+     * - Either {@code -input <file>} or {@code -output <file>} must be provided, but not both.
+     * - Each option must be followed by a filename.
+     * - {@code -stopkey <name>} optionally sets the stop key for recording.
+     * - {@code -l} lists available macros and cannot be combined with input or output.
+     * @param args the arguments passed to {@link #main(String[])}
+     * @return {@code null} if valid, otherwise an error string suitable for an exception message
      */
     public static String argChecks(String[] args) {
         logger.trace("Arguments provided: {}", String.join(" ", args));

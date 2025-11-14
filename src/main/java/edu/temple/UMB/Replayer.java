@@ -50,9 +50,14 @@ public class Replayer {
         kr = new KeyReplayer(loadedJNativeHookEvents);
     }
 
+    /**
+     * Starts the replay of loaded events and waits briefly for completion.
+     * Shuts down the {@link KeyReplayer#scheduler} after scheduling and awaits termination for up to one second.
+     */
     public void start() {
+        System.out.println("Starting Replayer. Press CTRL+C to exit before completion.");
         kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
-        kr.scheduler.shutdown();
+        kr.scheduler.shutdown(); // TODO: why are we only waiting one second here? most likely causing bug where macros over a second arent really working
 
         // wait for KeyReplayer thread to exit
         try {
@@ -62,12 +67,5 @@ public class Replayer {
             logger.error("Replay interrupted", e);
             throw new RuntimeException(e);
         }
-    }
-
-    public void startAt(long startTime)  {
-        while (System.nanoTime() >=  startTime) {
-            continue;
-        }
-        this.start();
     }
 }

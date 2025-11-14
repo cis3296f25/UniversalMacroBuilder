@@ -15,6 +15,10 @@ import org.apache.logging.log4j.Logger;
 
 import static java.lang.Thread.sleep;
 
+/**
+ * Records global keyboard and mouse input using JNativeHook.
+ * Produces {@link KeyEvent} and {@link MouseEvent} instances with millisecond offsets from the start of recording.
+ */
 public class InputEventRecorder implements NativeKeyListener, NativeMouseInputListener {
     private static final Logger logger = LogManager.getLogger(InputEventRecorder.class);
     private final List<KeyEvent> keyEvents = new ArrayList<>();
@@ -23,13 +27,18 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
     private long firstEventTime = -1;
     private final int stopKeyCode;
     
-    // Constructor that takes the stop key name as a parameter
+    /**
+     * Creates a recorder that will stop when the specified key is pressed.
+     * @param stopKeyName key name such as {@code ESCAPE} corresponding to {@link NativeKeyEvent} {@code VC_*} constants
+     */
     public InputEventRecorder(String stopKeyName) {
         this.stopKeyCode = keyTextToJNative(stopKeyName);
     }
 
-
-    // Helper method to convert the stop key to JNativeHook key code
+    /**
+     * Converts a key text like {@code ESCAPE} to the corresponding JNativeHook {@code VC_*} code.
+     * Falls back to {@code VC_ESCAPE} if the input cannot be resolved.
+     */
     private int keyTextToJNative(String keyText) {
         // Turn off JNativeHook's internal logging to keep the console clean
         java.util.logging.Logger jnhLogger =
@@ -46,6 +55,9 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         }
     }
 
+    /**
+     * Registers native hooks and begins capturing input events.
+     */
     public void startRecording() throws Exception {
         logger.info("Registering native hooks and starting input recording");
         GlobalScreen.registerNativeHook();
@@ -140,11 +152,19 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
         printMouseEventToTerminal("MOUSE MOVED: " + eventText);
     }
 
-
+    /**
+     * Returns the recorded key events so far.
+     */
     public List<KeyEvent> getKeyEvents() { return keyEvents; }
 
+    /**
+     * Returns the recorded mouse events so far.
+     */
     public List<MouseEvent> getMouseEvents() { return mouseEvents; }
 
+    /**
+     * Indicates whether recording is active.
+     */
     public boolean isRecording() {
         return recording;
     }

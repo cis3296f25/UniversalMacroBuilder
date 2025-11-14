@@ -16,10 +16,9 @@ import org.apache.logging.log4j.Logger;
 /**
  * Replays a sequence of translated keyboard {@link AWTReplayEvent}s at specific timestamps.
  * Uses a {@link ScheduledExecutorService} to schedule events and a {@link Robot} to emit key presses and releases.
- * <p>
  * Notes on timing and lifecycle:
- * - Event delays are computed relative to when this instance was created, not when {@code start()} is invoked.
- * - This class does not block; callers are responsible for shutting down and awaiting the {@code scheduler} if needed.
+ * Event delays are computed relative to when {@code start()} schedules tasks, based on each entry time in {@code awtEvents}.
+ * This class does not block; callers are responsible for shutting down and awaiting the {@code scheduler} if needed.
  */
 public class KeyReplayer {
     private static final Logger logger = LogManager.getLogger(KeyReplayer.class);
