@@ -9,14 +9,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * This {@code KeyReplayer} class is responsible for replaying a sequence of {@link AWTReplayEvent}s at designated timestamps.
+ * This {@code KeyReplayer} class is responsible for replaying a sequence of {@link AWTKeyReplayEvent}s at designated timestamps.
  * It uses {@link ScheduledExecutorService} to schedule the events before they are executed, and each event is then
  * executed with {@link Robot}.
  */
 public class KeyReplayer {
     private static final Logger logger = LogManager.getLogger(KeyReplayer.class);
     // ordered mapping of timestamps to AWTReplayEvents
-    LinkedHashMap<Long, AWTReplayEvent> awtEvents;
+    LinkedHashMap<Long, AWTKeyReplayEvent> awtEvents;
     // the scheduler we will use to enable accurate playback. TODO: make this private and have this class auto terminate after last event
     public final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     // system time when replay was started
@@ -27,9 +27,9 @@ public class KeyReplayer {
     /**
      * Constructs an instance of {@code KeyReplayer} with the specified event sequence.
      * @param awtEvents a {@link LinkedHashMap} that contains an ordered mapping of timestamps from recording started to
-     *                 the {@link AWTReplayEvent} to be replayed.
+     *                 the {@link AWTKeyReplayEvent} to be replayed.
      */
-    public KeyReplayer(LinkedHashMap<Long, AWTReplayEvent> awtEvents) {
+    public KeyReplayer(LinkedHashMap<Long, AWTKeyReplayEvent> awtEvents) {
         this.awtEvents = awtEvents;
     }
 
@@ -55,12 +55,12 @@ public class KeyReplayer {
     }
 
     /**
-     * Executes a single {@link AWTReplayEvent}.
+     * Executes a single {@link AWTKeyReplayEvent}.
      * Depending on the {@code context} of the event ("PRESSED" or "RELEASED"),
      * this method will call {@link Robot#keyPress(int)} or {@link Robot#keyRelease(int)}.
-     * @param event the {@link AWTReplayEvent} to execute
+     * @param event the {@link AWTKeyReplayEvent} to execute
      */
-    private void executeEvent(AWTReplayEvent event) {
+    private void executeEvent(AWTKeyReplayEvent event) {
         logger.debug("Executing {} with code {}", event.context, event.event);
         if (event.context.equals("PRESSED")) {
             robot.keyPress(event.event);

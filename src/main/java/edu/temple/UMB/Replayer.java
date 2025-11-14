@@ -1,6 +1,5 @@
 package edu.temple.UMB;
 
-import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -18,10 +17,12 @@ import org.apache.logging.log4j.Logger;
 public class Replayer {
     private static final Logger logger = LogManager.getLogger(Replayer.class);
     private File inFile;
-    private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
+    private LinkedHashMap<Long, String> loadedJNativeHookKeyEvents = new LinkedHashMap<>();
+    private LinkedHashMap<Long, String> loadedJNativeHookMouseEvents = new LinkedHashMap<>();
     private static Map<Integer, Integer> jnativeToAwt = new HashMap<>();
-    private LinkedHashMap<Long, AWTReplayEvent> AWTEvents = new LinkedHashMap<>();
-    Loader l;
+    private LinkedHashMap<Long, AWTKeyReplayEvent> AWTEvents = new LinkedHashMap<>();
+    KeyLoader kl;
+    MouseLoader ml;
     KeyReplayer kr;
 
     /**
@@ -32,18 +33,31 @@ public class Replayer {
      */
     public Replayer(String inPath) {
         this.inFile = new File(inPath);
-        l = new Loader(inFile);
+        kl = new KeyLoader(inFile);
+        ml = new MouseLoader(inFile);
 
         // load events from file
         try {
-            loadedJNativeHookEvents = l.loadJNativeEventsFromFile();
-            logger.info("Loaded {} raw events from file {}", loadedJNativeHookEvents.size(), inFile.getAbsolutePath());
-            for (Long key : loadedJNativeHookEvents.keySet()) {
-                logger.debug("{} - {}", key, loadedJNativeHookEvents.get(key));
+            loadedJNativeHookKeyEvents = kl.loadJNativeEventsFromFile();
+            logger.info("Loaded {} raw key events from file {}", loadedJNativeHookKeyEvents.size(), inFile.getAbsolutePath());
+            for (Long key : loadedJNativeHookKeyEvents.keySet()) {
+                logger.debug("{} - {}", key, loadedJNativeHookKeyEvents.get(key));
             }
         } catch (Exception ex) {
             logger.error("Failed to load events from file {}", inFile.getAbsolutePath(), ex);
         }
+
+        try {
+            loadedJNativeHookMouseEvents = ml.loadJNativeEventsFromFile();
+            logger.info("Loaded {} raw mouse events from file {}", loadedJNativeHookKeyEvents.size(), inFile.getAbsolutePath());
+            for (Long key : loadedJNativeHookKeyEvents.keySet()) {
+                logger.debug("{} - {}", key, loadedJNativeHookKeyEvents.get(key));
+            }
+        } catch (Exception ex) {
+            logger.error("Failed to load events from file {}", inFile.getAbsolutePath(), ex);
+        }
+
+
 
         // translate those events to AWT events
         JNativeToAWT();
@@ -163,11 +177,11 @@ public class Replayer {
      * Translates recorded JNativeHook key events into AWT-compatible key events.
      * This method creates a mapping between {@link NativeKeyEvent} key codes and
      * {@link KeyEvent} constants, then converts each loaded event into an
-     * {@link AWTReplayEvent}. Unsupported or unmapped keys are logged to the console.
+     * {@link AWTKeyReplayEvent}. Unsupported or unmapped keys are logged to the console.
      */
     private void JNativeToAWT() {
-        for (Long key : loadedJNativeHookEvents.keySet()) {
-            String[] parts = loadedJNativeHookEvents.get(key).split("_");
+        for (Long key : loadedJNativeHookKeyEvents.keySet()) {
+            String[] parts = loadedJNativeHookKeyEvents.get(key).split("_");
             try {
                 int code = Integer.parseInt(parts[1]);
                 Integer awtCode = jnativeToAwt.get(code);
@@ -176,7 +190,7 @@ public class Replayer {
                     continue; // skip unknown keys
                 }
 
-                AWTReplayEvent event = new AWTReplayEvent(parts[0], awtCode);
+                AWTKeyReplayEvent event = new AWTKeyReplayEvent(parts[0], awtCode);
                 AWTEvents.put(key, event);
             } catch (Exception e) {
                 logger.error("Failed to translate key: {}", parts.length > 1 ? parts[1] : "<unknown>", e);
