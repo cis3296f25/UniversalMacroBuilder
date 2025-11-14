@@ -49,9 +49,9 @@ public class Replayer {
 
         try {
             loadedJNativeHookMouseEvents = ml.loadJNativeEventsFromFile();
-            logger.info("Loaded {} raw mouse events from file {}", loadedJNativeHookKeyEvents.size(), inFile.getAbsolutePath());
-            for (Long key : loadedJNativeHookKeyEvents.keySet()) {
-                logger.debug("{} - {}", key, loadedJNativeHookKeyEvents.get(key));
+            logger.info("Loaded {} raw mouse events from file {}", loadedJNativeHookMouseEvents.size(), inFile.getAbsolutePath());
+            for (Long key : loadedJNativeHookMouseEvents.keySet()) {
+                logger.debug("{} - {}", key, loadedJNativeHookMouseEvents.get(key));
             }
         } catch (Exception ex) {
             logger.error("Failed to load events from file {}", inFile.getAbsolutePath(), ex);
