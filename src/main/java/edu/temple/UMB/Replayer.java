@@ -55,7 +55,7 @@ public class Replayer {
      * Shuts down the {@link KeyReplayer#scheduler} after scheduling and awaits termination for up to one second.
      */
     public void start() {
-        System.out.println("Starting Replayer. Press CTRL+C to exit before completion.");
+        System.out.println("Starting Replayer. Press CTRL+C to exit Replayer early.");
         kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
         kr.scheduler.shutdown(); // TODO: why are we only waiting one second here? most likely causing bug where macros over a second arent really working
 
