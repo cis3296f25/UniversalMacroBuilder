@@ -25,6 +25,7 @@ public class Main {
     public static String stopKey = "ESCAPE";
     public static boolean listMacrosFlag = false;
     private static final String MACRO_FOLDER_NAME = "macros";
+    public static Integer repeatCount = null; 
 
     /**
      * Application entry point.
@@ -48,7 +49,13 @@ public class Main {
         }
         String argsRes = argChecks(args);
         if (argsRes != null) {
-            System.out.println("java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey <stopkey>] [-l]");
+            System.out.println(
+                "java -jar UniversalMacroBuilder.jar " +
+                "(-output <out_path> | -input <in_path>) " +
+                "[-stopkey <stopkey>] " +
+                "[-repeat [count]] " +
+                "[-l]"
+            );
             throw new IllegalArgumentException(argsRes);
         }
 
@@ -77,8 +84,26 @@ public class Main {
 
             logger.info("Replaying macro: {}", inFile.getAbsolutePath());
             System.out.println("[INFO] Replaying macro: " + inFile.getName());
-            Replayer replayer = new Replayer(inFile.getAbsolutePath());
-            replayer.start();
+
+            if (repeatCount == null) {
+                // repeat once 
+                new Replayer(inFile.getAbsolutePath()).start();
+            }
+            else if (repeatCount == -1) {
+                // infinite loop
+                logger.info("Replaying macro indefinitely until stopped.");
+                while (true) {
+                    new Replayer(inFile.getAbsolutePath()).start();
+                }
+            }
+            else {
+                // repeat fixed number of times
+                logger.info("Replaying macro {} times.", repeatCount);
+                for (int r = 0; r < repeatCount; r++) {
+                    new Replayer(inFile.getAbsolutePath()).start();
+                }
+            }
+
         } else if (out_file_str != null) {
             File outFile = new File(macroDir, out_file_str);
 
@@ -194,6 +219,22 @@ public class Main {
                         return "ERROR: -l should not be used with input or output!";
                     }
                     listMacrosFlag = true;
+                }
+                case "-repeat" -> {
+                    // repeat only makes sense when replaying, not recording
+                    if (out_file_str != null) {
+                        logger.fatal("-repeat cannot be used when recording!");
+                        return "ERROR: -repeat can only be used with -input!";
+                    }
+
+                    // if next token exists AND is a number → treat it as count
+                    if (i + 1 < args.length && args[i + 1].matches("\\d+")) {
+                        repeatCount = Integer.parseInt(args[i + 1]);
+                        i++;
+                    } else {
+                        // no number provided = infinite loop
+                        repeatCount = -1;   // use -1 as "infinite"
+                    }
                 }
                 default -> {
                     logger.fatal("Unknown argument: " + args[i]);

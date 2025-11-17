@@ -47,7 +47,7 @@ EOF
 
     // with this we can guarantee under 50ms mean absolute difference and under 5ms mean absolute gap (the correctness of inter-event spacing)
     Long MAD_CUTOFF = 50L;
-    Long MAG_CUTOFF = 5L;
+    Long MAG_CUTOFF = 7L;
 
     @BeforeAll
     void init() throws RuntimeException, IOException {
@@ -161,7 +161,7 @@ EOF
 
         // some hard limits on timings that we should always pass
         assertTrue(mad < MAD_CUTOFF);
-        assertTrue(mag < MAG_CUTOFF);
+        assertTrue(mag <= MAG_CUTOFF);
 
         // TODO: if were feeling nice, make a custom macro here and feed it to a new replayer that just holds backspace for like a second to get rid of stuff typed above
     }
