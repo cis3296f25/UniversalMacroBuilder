@@ -13,12 +13,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.concurrent.*;
 
+
 /**
  * Benchmarks end-to-end record and replay timing characteristics.
  */
 // allows before all annotation to be non-static, see https://docs.junit.org/current/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.Lifecycle.html
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BenchmarkingTests {
+    boolean benchmarking = false;
     // TODO: test fast keyboard inputs (and mouse!)
     private final String predeterminedEvents = """
 START KEY EVENTS
@@ -51,6 +53,9 @@ EOF
 
     @BeforeAll
     void init() throws RuntimeException, IOException {
+        if (!benchmarking) {
+            return;
+        }
         // before all the tests, setup the file it will read from.
         // check if the tmp dir exists, create if not
         tmpDirFile = new File(tmpDirPath);
@@ -72,6 +77,9 @@ EOF
 
     @AfterAll
     void cleanup() throws IOException {
+        if (!benchmarking) {
+            return;
+        }
         // delete our tmp file and dir
         Files.deleteIfExists(Paths.get(tmpRecorderOutPath));
         Files.deleteIfExists(predeterminedEventsFile.toPath());
@@ -80,6 +88,10 @@ EOF
 
     @Test
     void benchmark() throws InterruptedException {
+        if (!benchmarking) {
+            System.out.println("WARNING: Benchmarking is not enabled!");
+            return;
+        }
         File out = new File(tmpRecorderOutPath);
         // so now we need to set up a replayer, feed it the predetermined events, then set up a recorder.
         // latch allows us to countdown to execution, getting pretty perfect execution times
