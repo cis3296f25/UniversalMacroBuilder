@@ -1,14 +1,9 @@
 package edu.temple.UMB;
 
-import java.awt.*;
 import java.io.File;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 
-import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,10 +16,13 @@ public class Replayer {
     private static final Logger logger = LogManager.getLogger(Replayer.class);
     private File inFile;
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
+    private LinkedHashMap<Long, String> loadedJNativeHookMouseEvents = new LinkedHashMap<>();
 
 
-    Loader l;
+    KeyLoader kl;
+    MouseLoader ml;
     KeyReplayer kr;
+    MouseReplayer mr;
 
     /**
      * Constructs a new {@code Replayer} from the given file path.
@@ -34,20 +32,34 @@ public class Replayer {
      */
     public Replayer(String inPath) {
         this.inFile = new File(inPath);
-        l = new Loader(inFile);
+        kl = new KeyLoader(inFile);
+
 
         // load events from file
         try {
-            loadedJNativeHookEvents = l.loadJNativeEventsFromFile();
-            logger.info("Loaded {} raw events from file {}", loadedJNativeHookEvents.size(), inFile.getAbsolutePath());
+            loadedJNativeHookEvents = kl.loadJNativeEventsFromFile();
+            logger.info("Loaded {} raw key events from file {}", loadedJNativeHookEvents.size(), inFile.getAbsolutePath());
             for (Long key : loadedJNativeHookEvents.keySet()) {
                 logger.debug("{} - {}", key, loadedJNativeHookEvents.get(key));
             }
         } catch (Exception ex) {
-            logger.error("Failed to load events from file {}", inFile.getAbsolutePath(), ex);
+            logger.error("Failed to load key events from file {}", inFile.getAbsolutePath(), ex);
+        }
+
+        ml = new MouseLoader(inFile);
+
+        try {
+            loadedJNativeHookMouseEvents = ml.loadJNativeEventsFromFile();
+            logger.info("Loaded {} raw mouse events from file {}", loadedJNativeHookMouseEvents.size(), inFile.getAbsolutePath());
+            for (Long key : loadedJNativeHookMouseEvents.keySet()) {
+                logger.debug("{} - {}", key, loadedJNativeHookMouseEvents.get(key));
+            }
+        } catch (Exception ex) {
+            logger.error("Failed to load mouse events from file {}", inFile.getAbsolutePath(), ex);
         }
 
         kr = new KeyReplayer(loadedJNativeHookEvents);
+        mr = new MouseReplayer(loadedJNativeHookMouseEvents);
     }
 
     /**
@@ -56,12 +68,15 @@ public class Replayer {
      */
     public void start() {
         System.out.println("Starting Replayer. Press CTRL+C to exit Replayer early.");
-        kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
-        kr.scheduler.shutdown(); // TODO: why are we only waiting one second here? most likely causing bug where macros over a second arent really working
+        kr.start();
+        mr.start();// TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
+        kr.scheduler.shutdown();
+        mr.scheduler.shutdown();// TODO: why are we only waiting one second here? most likely causing bug where macros over a second arent really working
 
         // wait for KeyReplayer thread to exit
         try {
             kr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
+            mr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
             logger.info("Replay finished");
         } catch (InterruptedException e) {
             logger.error("Replay interrupted", e);

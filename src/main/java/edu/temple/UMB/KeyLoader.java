@@ -9,15 +9,15 @@ import org.apache.logging.log4j.Logger;
 /**
  * Loads recorded JNativeHook key events from a text file into an ordered map.
  */
-public class Loader {
-    private static final Logger logger = LogManager.getLogger(Loader.class);
+public class KeyLoader {
+    private static final Logger logger = LogManager.getLogger(KeyLoader.class);
     private File inFile;
 
     /**
      * Creates a loader for the given input file.
      * @param inFile file containing recorded events
      */
-    public Loader(File inFile) {
+    public KeyLoader(File inFile) {
         this.inFile = inFile;
     }
 
@@ -30,7 +30,7 @@ public class Loader {
      */
     public LinkedHashMap<Long, String> loadJNativeEventsFromFile() throws FileNotFoundException {
         LinkedHashMap<Long, String> map = new LinkedHashMap<>();
-        logger.debug("Loading JNativeHook events from file: {}", inFile.getAbsolutePath());
+        logger.debug("Loading JNativeHook key events from file: {}", inFile.getAbsolutePath());
         Scanner sc = new Scanner(inFile);
         int lineCount = 0;
         while (sc.hasNextLine()) {
@@ -48,7 +48,8 @@ public class Loader {
             String[] parts = line.split(" ");
             map.put(Long.parseLong(parts[0]), parts[1] + "_" + parts[2]);
         }
-        logger.info("Loaded {} events from file {} ({} lines read)", map.size(), inFile.getAbsolutePath(), lineCount);
+
+        logger.info("Loaded {} key events from file {} ({} lines read)", map.size(), inFile.getAbsolutePath(), lineCount);
         return map;
     }
 

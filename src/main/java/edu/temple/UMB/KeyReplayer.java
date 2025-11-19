@@ -33,7 +33,7 @@ public class KeyReplayer {
 
     /**
      * Constructor for {@link KeyReplayer}.
-     * @param loadedJNativeHookEvents The JNativeHook events returned by {@link Loader}.
+     * @param loadedJNativeHookEvents The JNativeHook events returned by {@link KeyLoader}.
      * @throws RuntimeException if the {@link Robot} cannot be created (e.g., if the environment does not support AWT operations).
      */
     public KeyReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
@@ -174,8 +174,8 @@ public class KeyReplayer {
 
 
     /**
-     * Translates recorded JNativeHook key events into AWT-compatible key events.
-     * This method creates a mapping between {@link NativeKeyEvent} key codes and
+     * Translates recorded JNativeHook key events into AWT-compatible mouse events.
+     * This method creates a mapping between {@link NativeKeyEvent}  codes and
      * {@link KeyEvent} constants, then converts each loaded event into an
      * {@link AWTReplayEvent}. Unsupported or unmapped keys are logged to the console.
      */
