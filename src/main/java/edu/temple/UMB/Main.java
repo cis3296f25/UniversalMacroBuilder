@@ -78,7 +78,6 @@ public class Main {
             logger.info("Replaying macro: {}", inFile.getAbsolutePath());
             System.out.println("[INFO] Replaying macro: " + inFile.getName());
             Replayer replayer = new Replayer(inFile.getAbsolutePath());
-            replayer.start();
         } else if (out_file_str != null) {
             File outFile = new File(macroDir, out_file_str);
 
