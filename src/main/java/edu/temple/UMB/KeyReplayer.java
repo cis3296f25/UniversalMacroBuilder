@@ -22,14 +22,14 @@ import org.apache.logging.log4j.Logger;
  */
 public class KeyReplayer {
     private static final Logger logger = LogManager.getLogger(KeyReplayer.class);
-    private static Map<Integer, Integer> jnativeToAwt = new HashMap<>();
+    private static final Map<Integer, Integer> jnativeToAwt = new HashMap<>();
     // ordered mapping of timestamps to AWTReplayEvents
     LinkedHashMap<Long, AWTReplayEvent> awtEvents = new LinkedHashMap<>();
     // the scheduler we will use to enable accurate playback. TODO: make this private and have this class auto terminate after last event
     public final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     // system time when replay was started
     // the (lazy instantiation) of the Robot class to be used for actual replay
-    private Robot robot;
+    private final Robot robot;
 
     /**
      * Constructor for {@link KeyReplayer}.
@@ -60,12 +60,16 @@ public class KeyReplayer {
      * Schedules and starts playback of specified event sequence. Schedules each event in {@code awtEvents} to execute
      * at the appropriate time relative to when playback begins. If an event's timestamp is in the past, it will be executed immediately.
      */
-    public void start() {
+    public Long start() {
+        long maxDelay = 0L;
         for (Long key : awtEvents.keySet()) {
             long delay = key;
             if (delay < 0) delay = 0;
+            maxDelay = Math.max(delay, maxDelay);
             scheduler.schedule(() -> executeEvent(awtEvents.get(key)), delay, TimeUnit.MILLISECONDS);
         }
+        scheduler.schedule(scheduler::shutdown, maxDelay + 100, TimeUnit.MILLISECONDS);
+        return maxDelay + 100;
     }
 
     /**
