@@ -26,10 +26,12 @@ public class KeyReplayer {
     // ordered mapping of timestamps to AWTReplayEvents
     LinkedHashMap<Long, AWTReplayEvent> awtEvents = new LinkedHashMap<>();
     // the scheduler we will use to enable accurate playback. TODO: make this private and have this class auto terminate after last event
-    public final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    final ScheduledExecutorService scheduler =
+            Executors.newSingleThreadScheduledExecutor();
     // system time when replay was started
     // the (lazy instantiation) of the Robot class to be used for actual replay
     private Robot robot;
+    long maxDelay;
 
     /**
      * Constructor for {@link KeyReplayer}.
@@ -60,12 +62,21 @@ public class KeyReplayer {
      * Schedules and starts playback of specified event sequence. Schedules each event in {@code awtEvents} to execute
      * at the appropriate time relative to when playback begins. If an event's timestamp is in the past, it will be executed immediately.
      */
+
     public void start() {
         for (Long key : awtEvents.keySet()) {
             long delay = key;
             if (delay < 0) delay = 0;
+            maxDelay = Math.max(maxDelay, delay);
+            logger.debug("Scheduling {} {} with delay {} ms", awtEvents.get(key).context, awtEvents.get(key).event, delay);
             scheduler.schedule(() -> executeEvent(awtEvents.get(key)), delay, TimeUnit.MILLISECONDS);
         }
+
+        scheduler.schedule(
+                scheduler::shutdown,
+                maxDelay + 100, // 100 ms buffer
+                TimeUnit.MILLISECONDS
+        );
     }
 
     /**
@@ -76,12 +87,18 @@ public class KeyReplayer {
      * @param event the {@link AWTReplayEvent} to execute
      */
     private void executeEvent(AWTReplayEvent event) {
-        logger.debug("Executing {} with code {}", event.context, event.event);
-        if (event.context.equals("PRESSED")) {
-            robot.keyPress(event.event);
-        } else if (event.context.equals("RELEASED")) {
-            robot.keyRelease(event.event);
-        }
+        logger.debug("{} Executing {} with code {}", System.currentTimeMillis(), event.context, event.event);
+        EventQueue.invokeLater(() -> {
+            try {
+                if ("PRESSED".equals(event.context)) {
+                    robot.keyPress(event.event);
+                } else if ("RELEASED".equals(event.context)) {
+                    robot.keyRelease(event.event);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 
     static {

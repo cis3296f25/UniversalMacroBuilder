@@ -57,11 +57,10 @@ public class Replayer {
     public void start() {
         System.out.println("Starting Replayer. Press CTRL+C to exit Replayer early.");
         kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
-        kr.scheduler.shutdown(); // TODO: why are we only waiting one second here? most likely causing bug where macros over a second arent really working
 
         // wait for KeyReplayer thread to exit
         try {
-            kr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
+            kr.scheduler.awaitTermination(10, TimeUnit.SECONDS);
             logger.info("Replay finished");
         } catch (InterruptedException e) {
             logger.error("Replay interrupted", e);
