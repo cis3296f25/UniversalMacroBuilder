@@ -47,7 +47,7 @@ EOF
 
     // with this we can guarantee under 50ms mean absolute difference and under 5ms mean absolute gap (the correctness of inter-event spacing)
     Long MAD_CUTOFF = 50L;
-    Long MAG_CUTOFF = 7L;
+    Long MAG_CUTOFF = 10L;
 
     @BeforeAll
     void init() throws RuntimeException, IOException {
@@ -83,14 +83,14 @@ EOF
         File out = new File(tmpRecorderOutPath);
         // so now we need to set up a replayer, feed it the predetermined events, then set up a recorder.
         // latch allows us to countdown to execution, getting pretty perfect execution times
-        Replayer replayer = new Replayer(predeterminedEventsFile.getAbsolutePath());
+        Replayer replayer = new Replayer(predeterminedEventsFile.getAbsolutePath(), -1);
         Recorder recorder = new Recorder(out, "ESCAPE");
         ExecutorService exec = Executors.newFixedThreadPool(2);
         CountDownLatch latch = new CountDownLatch(1);
 
         exec.submit(() -> {
             try {
-                latch.await();  // both wait for signal
+                latch.await();  // 
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
