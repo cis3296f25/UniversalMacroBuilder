@@ -52,6 +52,13 @@ public class KeyReplayer {
         // initialize robot so now so we have minimal overhead later
         try {
             robot = new Robot();
+            // Ensure Robot waits for the native event queue (especially important on Windows to avoid visible batching)
+            try {
+                robot.setAutoWaitForIdle(true);
+                robot.setAutoDelay(0);
+            } catch (Exception ignore) {
+                // setAutoWaitForIdle may not be available on very old JREs, ignore if so
+            }
             logger.info("Key replay started with {} events", awtEvents.size());
         } catch (AWTException e) {
             logger.fatal("Failed to initialize Robot for key replay", e);
@@ -98,6 +105,13 @@ public class KeyReplayer {
                 executeEvent(entry.getValue());
                 maxDelay = Math.max(maxDelay, delayMs);
             }
+            // Ensure all generated native events have been processed before returning.
+            try {
+                robot.waitForIdle();
+            } catch (Exception ignore) {}
+            try {
+                Toolkit.getDefaultToolkit().sync();
+            } catch (Exception ignore) {}
         } finally {
             scheduler.shutdown();
         }
