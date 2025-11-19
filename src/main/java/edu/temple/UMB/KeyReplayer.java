@@ -64,19 +64,44 @@ public class KeyReplayer {
      */
 
     public void start() {
-        for (Long key : awtEvents.keySet()) {
-            long delay = key;
-            if (delay < 0) delay = 0;
-            maxDelay = Math.max(maxDelay, delay);
-            logger.debug("Scheduling {} {} with delay {} ms", awtEvents.get(key).context, awtEvents.get(key).event, delay);
-            scheduler.schedule(() -> executeEvent(awtEvents.get(key)), delay, TimeUnit.MILLISECONDS);
-        }
+        final long startNano = System.nanoTime();
+        scheduler.execute(() -> {
+            try {
+                for (Map.Entry<Long, AWTReplayEvent> entry : awtEvents.entrySet()) {
+                    long delayMs = Math.max(0L, entry.getKey());
+                    long targetNano = startNano + TimeUnit.MILLISECONDS.toNanos(delayMs);
 
-        scheduler.schedule(
-                scheduler::shutdown,
-                maxDelay + 100, // 100 ms buffer
-                TimeUnit.MILLISECONDS
-        );
+                    // Wait until it's time to fire the event, using coarse sleep then fine spin.
+                    while (true) {
+                        long now = System.nanoTime();
+                        long remaining = targetNano - now;
+                        if (remaining <= 0) break;
+
+                        // If far away, sleep most of the remaining time to avoid CPU burn.
+                        if (remaining > TimeUnit.MILLISECONDS.toNanos(2)) {
+                            long sleepMs = TimeUnit.NANOSECONDS.toMillis(remaining) - 1; // leave ~1ms for fine wait
+                            if (sleepMs > 0) {
+                                try {
+                                    Thread.sleep(sleepMs);
+                                } catch (InterruptedException ie) {
+                                    Thread.currentThread().interrupt();
+                                    return;
+                                }
+                                continue;
+                            }
+                        }
+                        // Fine-grained wait: spin/yield for sub-millisecond resolution.
+                        Thread.onSpinWait();
+                    }
+
+                    logger.debug("Executing {} with code {} at {} ns target {} ns", entry.getValue().context, entry.getValue().event, System.nanoTime(), targetNano);
+                    executeEvent(entry.getValue());
+                    maxDelay = Math.max(maxDelay, delayMs);
+                }
+            } finally {
+                scheduler.shutdown();
+            }
+        });
     }
 
     /**
