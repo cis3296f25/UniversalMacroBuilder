@@ -19,9 +19,11 @@ import static java.lang.Thread.sleep;
  */
 public class Replayer {
     private static final Logger logger = LogManager.getLogger(Replayer.class);
-    private File inFile;
-    private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
 
+    private File inFile;
+    private final int repeatCount;
+
+    private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
 
     Loader l;
     KeyReplayer kr;
@@ -32,8 +34,13 @@ public class Replayer {
      * from the file, then initiates replay using {@link KeyReplayer}.
      * @param inPath the path to the input file containing recorded JNativeHook events.
      */
-    public Replayer(String inPath) {
+    public Replayer(String inPath, int repeatCount){
         this.inFile = new File(inPath);
+        this.repeatCount = repeatCount;
+
+        logger.info("Initializing Replayer with file: {}", inFile.getAbsolutePath());
+        logger.info("Repeat count set to: {}", repeatCount);
+
         l = new Loader(inFile);
 
         // load events from file
@@ -56,16 +63,36 @@ public class Replayer {
      */
     public void start() {
         System.out.println("Starting Replayer. Press CTRL+C to exit Replayer early.");
+        
+        if (repeatCount ==-1){
+            logger.info("Infinite replay mode.");
+            while (true){
+                playOnce();
+            }
+        }
+        else{
+            logger.info("Replaying {} times.", repeatCount);
+            for (int i = 0; i < repeatCount; i++){
+                playOnce();
+            }
+        }
+        
+        logger.info("Replay finished.");
+    }
+
+    private void playOnce() {
+        logger.info("Starting replay iteration.");
+
+        KeyReplayer kr = new KeyReplayer(loadedJNativeHookEvents);
         kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
         kr.scheduler.shutdown(); // TODO: why are we only waiting one second here? most likely causing bug where macros over a second arent really working
 
-        // wait for KeyReplayer thread to exit
         try {
-            kr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
-            logger.info("Replay finished");
+            kr.scheduler.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
             logger.error("Replay interrupted", e);
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
         }
     }
 }
+

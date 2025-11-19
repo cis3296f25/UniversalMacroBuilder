@@ -84,25 +84,20 @@ public class Main {
 
             logger.info("Replaying macro: {}", inFile.getAbsolutePath());
             System.out.println("[INFO] Replaying macro: " + inFile.getName());
+            
+            // DEFAULT: 1 replay
+            int rc = (repeatCount == null ? 1 : repeatCount);
 
-            if (repeatCount == null) {
-                // repeat once 
-                new Replayer(inFile.getAbsolutePath()).start();
-            }
-            else if (repeatCount == -1) {
-                // infinite loop
+            // -repeat with no number = infinite (-1)
+            if (rc == -1) {
                 logger.info("Replaying macro indefinitely until stopped.");
                 while (true) {
-                    new Replayer(inFile.getAbsolutePath()).start();
+                    new Replayer(inFile.getAbsolutePath(), 1).start();
                 }
             }
-            else {
-                // repeat fixed number of times
-                logger.info("Replaying macro {} times.", repeatCount);
-                for (int r = 0; r < repeatCount; r++) {
-                    new Replayer(inFile.getAbsolutePath()).start();
-                }
-            }
+
+            // Normal repeat via Replayer handling it internally
+            new Replayer(inFile.getAbsolutePath(), rc).start();
 
         } else if (out_file_str != null) {
             File outFile = new File(macroDir, out_file_str);
