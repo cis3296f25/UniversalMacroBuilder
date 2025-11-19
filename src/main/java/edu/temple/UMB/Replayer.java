@@ -9,6 +9,8 @@ import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 /**
@@ -21,6 +23,7 @@ public class Replayer {
     private LinkedHashMap<Long, AWTReplayEvent> AWTEvents = new LinkedHashMap<>();
     Loader l;
     KeyReplayer kr;
+    private static final Logger logger = LogManager.getLogger(Replayer.class);
 
     /**
      * Constructs a new {@code Replayer} from the given file path.
@@ -43,13 +46,13 @@ public class Replayer {
         JNativeToAWT();
 
         // debug print
-        System.out.println("Loaded JNativeHook events from file and translated to AWTEvents (below)");
+        logger.debug("Loaded JNativeHook events from file and translated to AWTEvents (below)");
         for (Long key : AWTEvents.keySet()) {
-            System.out.println(key + " " + AWTEvents.get(key).context + " " + AWTEvents.get(key).event);
+            logger.debug("{} {} {}", key, AWTEvents.get(key).context, AWTEvents.get(key).event);
         }
-
         // instantiate the KeyReplayer and replay events
         kr = new KeyReplayer(AWTEvents);
+        System.out.println("Starting Replayer. Press CTRL+C to exit before completion.");
         kr.start();
         kr.scheduler.shutdown();
 

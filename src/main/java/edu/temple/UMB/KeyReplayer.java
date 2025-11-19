@@ -6,6 +6,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+
 /**
  * This {@code KeyReplayer} class is responsible for replaying a sequence of {@link AWTReplayEvent}s at designated timestamps.
  * It uses {@link ScheduledExecutorService} to schedule the events before they are executed, and each event is then
@@ -20,6 +24,7 @@ public class KeyReplayer {
     private final long startTime = System.currentTimeMillis();
     // the (lazy instantiation) of the Robot class to be used for actual replay
     private Robot robot;
+    private static final Logger logger = LogManager.getLogger(KeyReplayer.class);
 
     /**
      * Constructs an instance of {@code KeyReplayer} with the specified event sequence.
@@ -56,7 +61,8 @@ public class KeyReplayer {
      * @param event the {@link AWTReplayEvent} to execute
      */
     private void executeEvent(AWTReplayEvent event) {
-        System.out.println("Executing " + event.context + " with code " + event.event);
+        logger.debug("Executing " + event.context + " with code " + event.event);
+        // System.out.println("Executing " + event.context + " with code " + event.event);
         if (event.context.equals("PRESSED")) {
             robot.keyPress(event.event);
         } else if (event.context.equals("RELEASED")) {
