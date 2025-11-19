@@ -88,17 +88,17 @@ public class KeyReplayer {
      */
     private void executeEvent(AWTReplayEvent event) {
         logger.debug("{} Executing {} with code {}", System.currentTimeMillis(), event.context, event.event);
-        EventQueue.invokeLater(() -> {
-            try {
-                if ("PRESSED".equals(event.context)) {
-                    robot.keyPress(event.event);
-                } else if ("RELEASED".equals(event.context)) {
-                    robot.keyRelease(event.event);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
+        try {
+            // Execute directly on the scheduler thread to preserve precise timing.
+            // Posting to the AWT Event Dispatch Thread (EDT) can batch events on Windows.
+            if ("PRESSED".equals(event.context)) {
+                robot.keyPress(event.event);
+            } else if ("RELEASED".equals(event.context)) {
+                robot.keyRelease(event.event);
             }
-        });
+        } catch (Exception ex) {
+            logger.error("Error executing AWT replay event", ex);
+        }
     }
 
     static {
