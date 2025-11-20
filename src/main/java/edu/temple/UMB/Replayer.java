@@ -2,17 +2,11 @@ package edu.temple.UMB;
 
 import java.awt.*;
 import java.io.File;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 
-import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import static java.lang.Thread.sleep;
 
 /**
  * The {@code Replayer} class loads, translates, and replays recorded input events (currently keyboard events, with mouse support planned for future versions).
@@ -20,7 +14,6 @@ import static java.lang.Thread.sleep;
 public class Replayer {
     private static final Logger logger = LogManager.getLogger(Replayer.class);
 
-    private File inFile;
     private final int repeatCount;
 
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
@@ -35,7 +28,7 @@ public class Replayer {
      * @param inPath the path to the input file containing recorded JNativeHook events.
      */
     public Replayer(String inPath, int repeatCount){
-        this.inFile = new File(inPath);
+        File inFile = new File(inPath);
         this.repeatCount = repeatCount;
 
         logger.info("Initializing Replayer with file: {}", inFile.getAbsolutePath());
@@ -76,7 +69,6 @@ public class Replayer {
                 playOnce();
             }
         }
-        
         logger.info("Replay finished.");
     }
 
@@ -84,11 +76,10 @@ public class Replayer {
         logger.info("Starting replay iteration.");
 
         KeyReplayer kr = new KeyReplayer(loadedJNativeHookEvents);
-        kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
-        kr.scheduler.shutdown(); // TODO: why are we only waiting one second here? most likely causing bug where macros over a second arent really working
+        long timeNeeded = kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
 
         try {
-            kr.scheduler.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            kr.scheduler.awaitTermination(timeNeeded + 100, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             logger.error("Replay interrupted", e);
             Thread.currentThread().interrupt();
