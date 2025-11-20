@@ -51,7 +51,7 @@ public class Replayer {
 
         // wait for KeyReplayer thread to exit
         try {
-            kr.scheduler.awaitTermination(timeNeeded + 10, TimeUnit.MILLISECONDS);
+            kr.scheduler.awaitTermination(timeNeeded + 100, TimeUnit.MILLISECONDS);
             logger.info("Replay finished");
         } catch (InterruptedException e) {
             logger.error("Replay interrupted", e);
