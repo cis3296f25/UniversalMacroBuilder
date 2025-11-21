@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class Loader {
     private static final Logger logger = LogManager.getLogger(Loader.class);
-    private File inFile;
+    private final File inFile;
 
     /**
      * Creates a loader for the given input file.
@@ -66,11 +66,12 @@ public class Loader {
         }
 
         if (!pressed.isEmpty()) {
-            System.out.println("Warning: Some keys were pressed but not released. Adding manual releases for these keys.");
+            System.out.println("Warning: Some keys were pressed but not released. Adding manual releases for these keys after last event.");
+            logger.warn("Some keys were pressed but not released. Adding manual releases for these keys after last event.");
             long manualReleaseTime = map.keySet().stream().max(Long::compare).get();
 
             for (String key : pressed.keySet()) {
-                long manualReleaseNewTime = manualReleaseTime + 1;
+                long manualReleaseNewTime = manualReleaseTime + 50;
                 map.put(manualReleaseNewTime, "RELEASED_" + key);
                 manualReleaseTime = manualReleaseNewTime;
                 logger.warn("Added manual release for key code {} at timestamp {}", key, manualReleaseNewTime);
