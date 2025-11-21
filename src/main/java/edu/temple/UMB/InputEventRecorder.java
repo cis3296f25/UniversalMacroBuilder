@@ -116,21 +116,21 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
 
         long delta = System.currentTimeMillis() - firstEventTime;
 
-        mouseEvents.add(new MouseEvent(delta, e, "MOUSE PRESSED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE_PRESSED"));
 
         // Print what the user types live in the terminal
         String eventText = e.paramString();
-        printMouseEventToTerminal("MOUSE PRESSED: " + eventText);
+        printMouseEventToTerminal("MOUSE_PRESSED: " + eventText);
     }
 
     @Override
     public void nativeMouseReleased(NativeMouseEvent e) {
         long delta = System.currentTimeMillis() - firstEventTime;
 
-        mouseEvents.add(new MouseEvent(delta, e, "MOUSE RELEASED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE_RELEASED"));
 
         String eventText = e.paramString();
-        printMouseEventToTerminal("MOUSE RELEASED: " + eventText);
+        printMouseEventToTerminal("MOUSE_RELEASED: " + eventText);
     }
 
     @Override public void nativeMouseClicked(NativeMouseEvent e) {}
@@ -138,18 +138,18 @@ public class InputEventRecorder implements NativeKeyListener, NativeMouseInputLi
     @Override
     public void nativeMouseDragged(NativeMouseEvent e) {
         long delta = System.currentTimeMillis() - firstEventTime;
-        mouseEvents.add(new MouseEvent(delta, e, "MOUSE DRAGGED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE_DRAGGED"));
         String eventText = e.paramString();
-        printMouseEventToTerminal("MOUSE DRAGGED: " + eventText);
+        printMouseEventToTerminal("MOUSE_DRAGGED: " + eventText);
     }
 
     @Override
     public void nativeMouseMoved(NativeMouseEvent e) {
         long delta = System.currentTimeMillis() - firstEventTime;
 
-        mouseEvents.add(new MouseEvent(delta, e, "MOUSE MOVED"));
+        mouseEvents.add(new MouseEvent(delta, e, "MOUSE_MOVED"));
         String eventText = e.paramString();
-        printMouseEventToTerminal("MOUSE MOVED: " + eventText);
+        printMouseEventToTerminal("MOUSE_MOVED: " + eventText);
     }
 
     /**
