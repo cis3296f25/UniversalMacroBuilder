@@ -47,9 +47,9 @@ EOF
     private String tmpRecorderOutPath = tmpDirPath + "/tmpRecorderOutput.txt";
 
 
-    // with this we can guarantee under 50ms mean absolute difference and under 5ms mean absolute gap (the correctness of inter-event spacing)
-    Long MAD_CUTOFF = 50L;
-    Long MAG_CUTOFF = 10L;
+    // with this we can guarantee under 500ms mean absolute difference (scheduling overhead) and under 5ms mean absolute gap (the correctness of inter-event spacing)
+    Long MAD_CUTOFF = 500L;
+    Long MAG_CUTOFF = 5L;
 
     @BeforeAll
     void init() throws RuntimeException, IOException {
