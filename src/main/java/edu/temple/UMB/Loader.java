@@ -49,6 +49,33 @@ public class Loader {
             map.put(Long.parseLong(parts[0]), parts[1] + "_" + parts[2]);
         }
         logger.info("Loaded {} events from file {} ({} lines read)", map.size(), inFile.getAbsolutePath(), lineCount);
+        
+
+        HashMap<String, Long> pressed = new HashMap<>();
+
+        for (Map.Entry<Long, String> entry : map.entrySet()) {
+            String[] parts = entry.getValue().split("_");
+            String type = parts[0];
+            String keyCode = parts[1];
+
+            if (type.equals("PRESSED")) {
+                pressed.put(keyCode, entry.getKey());
+            } else if (type.equals("RELEASED")) {
+                pressed.remove(keyCode);
+            }
+        }
+
+        if (!pressed.isEmpty()) {
+            System.out.println("Warning: Some keys were pressed but not released. Adding manual releases for these keys.");
+            long manualReleaseTime = map.keySet().stream().max(Long::compare).get();
+
+            for (String key : pressed.keySet()) {
+                long manualReleaseNewTime = manualReleaseTime + 1;
+                map.put(manualReleaseNewTime, "RELEASED_" + key);
+                manualReleaseTime = manualReleaseNewTime;
+                logger.warn("Added manual release for key code {} at timestamp {}", key, manualReleaseNewTime);
+            }
+        }
         return map;
     }
 
