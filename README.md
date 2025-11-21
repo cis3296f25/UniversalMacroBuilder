@@ -17,6 +17,8 @@ Arguments are as specified below:
 
 `-stopkey <key>`:  the key to stop recording and exit the program.
 
+`-repeat [count]`:  enters replay mode and executes the specified macro infinitely or count times.
+
 Stop key codes are inputted as strings and resolved according to the [JNative Constants page](https://javadoc.io/static/com.1stleg/jnativehook/2.0.3/constant-values.html#org.jnativehook.keyboard.NativeKeyEvent.VC_N).
 For example, an input of `NUM_LOCK` will properly resolve to `VC_NUM_LOCK`, whereas `NUMLOCK` will fail and default to `VC_ESCAPE`.
 
