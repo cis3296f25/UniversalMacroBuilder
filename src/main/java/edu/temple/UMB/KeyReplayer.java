@@ -5,6 +5,8 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +32,9 @@ public class KeyReplayer {
     // system time when replay was started
     // the (lazy instantiation) of the Robot class to be used for actual replay
     private final Robot robot;
+    // track keys currently pressed
+    private final Set<Integer> keysDown = ConcurrentHashMap.newKeySet();
+
 
     /**
      * Constructor for {@link KeyReplayer}.
@@ -82,10 +87,21 @@ public class KeyReplayer {
     private void executeEvent(AWTReplayEvent event) {
         logger.debug("Executing {} with code {}", event.context, event.event);
         if (event.context.equals("PRESSED")) {
+            keysDown.add(event.event);
             robot.keyPress(event.event);
         } else if (event.context.equals("RELEASED")) {
+            keysDown.remove(event.event);
             robot.keyRelease(event.event);
         }
+    }
+
+    public void releaseAllHeld() {
+        for (Integer key : keysDown) {
+            try {
+                robot.keyRelease(key);
+            } catch (Exception ignored) {}
+        }
+        keysDown.clear();
     }
 
     static {
