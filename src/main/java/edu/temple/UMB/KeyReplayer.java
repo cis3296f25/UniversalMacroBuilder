@@ -73,8 +73,10 @@ public class KeyReplayer {
             maxDelay = Math.max(delay, maxDelay);
             scheduler.schedule(() -> executeEvent(awtEvents.get(key)), delay, TimeUnit.MILLISECONDS);
         }
-        scheduler.schedule(scheduler::shutdown, maxDelay + 100, TimeUnit.MILLISECONDS);
-        return maxDelay + 100;
+        scheduler.schedule(() -> logger.info("Replay finished!"), maxDelay + 50, TimeUnit.MILLISECONDS);
+        scheduler.schedule(this::releaseAllHeld, maxDelay + 100, TimeUnit.MILLISECONDS);
+        scheduler.schedule(scheduler::shutdown, maxDelay + 150, TimeUnit.MILLISECONDS);
+        return maxDelay + 150;
     }
 
     /**
@@ -98,6 +100,7 @@ public class KeyReplayer {
     public void releaseAllHeld() {
         for (Integer key : keysDown) {
             try {
+                logger.warn("Key {} is still being held! Trying to release...", key);
                 robot.keyRelease(key);
             } catch (Exception ignored) {}
         }

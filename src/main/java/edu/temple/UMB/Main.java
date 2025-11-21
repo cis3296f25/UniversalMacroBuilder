@@ -88,14 +88,6 @@ public class Main {
             // DEFAULT: 1 replay
             int rc = (repeatCount == null ? 1 : repeatCount);
 
-            // -repeat with no number = infinite (-1)
-            if (rc == -1) {
-                logger.info("Replaying macro indefinitely until stopped.");
-                while (true) {
-                    new Replayer(inFile.getAbsolutePath(), 1).start();
-                }
-            }
-
             // Normal repeat via Replayer handling it internally
             new Replayer(inFile.getAbsolutePath(), rc).start();
 

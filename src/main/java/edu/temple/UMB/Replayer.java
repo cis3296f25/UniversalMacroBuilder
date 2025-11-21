@@ -46,8 +46,6 @@ public class Replayer {
         } catch (Exception ex) {
             logger.error("Failed to load events from file {}", inFile.getAbsolutePath(), ex);
         }
-
-        kr = new KeyReplayer(loadedJNativeHookEvents);
     }
 
     /**
@@ -56,7 +54,15 @@ public class Replayer {
      */
     public void start() {
         System.out.println("Starting Replayer. Press CTRL+C to exit Replayer early.");
-        
+
+        // add a shutdown hook to capture ctrl c and empty event queue (ensuring kr was actually initialized)
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Shutting down Replayer early.");
+            this.kr.scheduler.shutdownNow();
+            this.kr.releaseAllHeld();
+        }));
+
+
         if (repeatCount ==-1){
             logger.info("Infinite replay mode.");
             while (true){
@@ -75,11 +81,12 @@ public class Replayer {
     private void playOnce() {
         logger.info("Starting replay iteration.");
 
-        KeyReplayer kr = new KeyReplayer(loadedJNativeHookEvents);
-        long timeNeeded = kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
+        this.kr = new KeyReplayer(loadedJNativeHookEvents);
+        long timeNeeded = this.kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
 
         try {
-            kr.scheduler.awaitTermination(timeNeeded + 100, TimeUnit.MILLISECONDS);
+            this.kr.scheduler.awaitTermination(timeNeeded + 100, TimeUnit.MILLISECONDS);
+            this.kr.releaseAllHeld(); // if for some reason a key is being held make sure it doesnt stay that way
         } catch (InterruptedException e) {
             logger.error("Replay interrupted", e);
             Thread.currentThread().interrupt();
