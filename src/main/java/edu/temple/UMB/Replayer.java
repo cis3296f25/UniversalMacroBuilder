@@ -4,6 +4,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,29 +56,43 @@ public class Replayer {
     public void start() {
         System.out.println("Starting Replayer. Press CTRL+C to exit Replayer early.");
 
-        // add a shutdown hook to capture ctrl c and empty event queue (ensuring kr was actually initialized)
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("Shutting down Replayer early.");
-            if (this.kr != null){
-                this.kr.scheduler.shutdownNow();
-                this.kr.releaseAllHeld();
-            }
-        }));
+        // shared, once-only cleanup used by both the JVM shutdown hook and Windows console handler
+        Runnable cleanup = getRunnable();
 
+        // Legacy JVM shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(cleanup, "ReplayerShutdownHook"));
+        // Cross-platform shutdown (adds Windows console handler where applicable)
+        CrossPlatformShutdown.install(cleanup);
 
-        if (repeatCount ==-1){
+        if (repeatCount == -1) {
             logger.info("Infinite replay mode.");
-            while (true){
+            while (true) {
                 playOnce();
             }
-        }
-        else{
+        } else {
             logger.info("Replaying {} times.", repeatCount);
-            for (int i = 0; i < repeatCount; i++){
+            for (int i = 0; i < repeatCount; i++) {
                 playOnce();
             }
         }
         logger.info("Replay finished.");
+    }
+
+    private Runnable getRunnable() {
+        AtomicBoolean cleaned = new AtomicBoolean(false);
+        return () -> {
+            if (cleaned.compareAndSet(false, true)) {
+                logger.info("Shutting down Replayer early (cleanup).");
+                try {
+                    if (this.kr != null) {
+                        try { this.kr.scheduler.shutdownNow(); } catch (Exception ignore) {}
+                        try { this.kr.releaseAllHeld(); } catch (Exception ignore) {}
+                    }
+                } catch (Throwable t) {
+                    logger.error("Error during Replayer cleanup", t);
+                }
+            }
+        };
     }
 
     private void playOnce() {
