@@ -1,4 +1,4 @@
-import edu.temple.UMB.KeyLoader;
+import edu.temple.UMB.Loader;
 import edu.temple.UMB.Recorder;
 import edu.temple.UMB.Replayer;
 import org.junit.jupiter.api.*;
@@ -129,7 +129,7 @@ EOF
         // there will be some difference in overall timestamps (probably around 50-200ms) due to differences in startup overhead (despite our best efforts to reduce this).
         // that's an important stat, but we really care about variance, or the average gap betweens two events.
         // we can actually just use our loader classes to load the out file
-        KeyLoader l =  new KeyLoader(out);
+        Loader l =  new Loader(out);
         LinkedHashMap<Long, String> recordedEvents;
         try {
             recordedEvents = l.loadJNativeEventsFromFile();
@@ -140,7 +140,7 @@ EOF
 
         // we could just manually parse through the predetermined events string or we can have loader do it for us.
         // need to always remove the last two events of predTS as theyre for the exit escape key and wont get recorded
-        l = new KeyLoader(predeterminedEventsFile);
+        l = new Loader(predeterminedEventsFile);
         LinkedHashMap<Long, String> predEvents;
         try {
             predEvents = l.loadJNativeEventsFromFile();

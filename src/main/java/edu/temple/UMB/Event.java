@@ -23,15 +23,3 @@ public class Event {
         return delta;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-

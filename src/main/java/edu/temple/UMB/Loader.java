@@ -9,15 +9,15 @@ import org.apache.logging.log4j.Logger;
 /**
  * Loads recorded JNativeHook key events from a text file into an ordered map.
  */
-public class KeyLoader {
-    private static final Logger logger = LogManager.getLogger(KeyLoader.class);
+public class Loader {
+    private static final Logger logger = LogManager.getLogger(Loader.class);
     private File inFile;
 
     /**
      * Creates a loader for the given input file.
      * @param inFile file containing recorded events
      */
-    public KeyLoader(File inFile) {
+    public Loader(File inFile) {
         this.inFile = inFile;
     }
 

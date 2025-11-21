@@ -1,5 +1,5 @@
 import edu.temple.UMB.Event;
-import edu.temple.UMB.KeyLoader;
+import edu.temple.UMB.Loader;
 import edu.temple.UMB.Writer;
 
 import org.junit.jupiter.api.*;
@@ -104,7 +104,7 @@ class WriterLoaderTests {
                 "EOF"
         ));
 
-        KeyLoader loader = new KeyLoader(input);
+        Loader loader = new Loader(input);
         LinkedHashMap<Long, String> map = loader.loadJNativeEventsFromFile();
 
         assertEquals(2, map.size());
@@ -118,7 +118,7 @@ class WriterLoaderTests {
         File input = tempDir.resolve("empty.txt").toFile();
         Files.write(input.toPath(), List.of());
 
-        KeyLoader loader = new KeyLoader(input);
+        Loader loader = new Loader(input);
         LinkedHashMap<Long, String> map = loader.loadJNativeEventsFromFile();
 
         // Expect no entries, no exception
@@ -137,7 +137,7 @@ class WriterLoaderTests {
                 "999 RELEASE A" // should not be read
         ));
 
-        KeyLoader loader = new KeyLoader(input);
+        Loader loader = new Loader(input);
         LinkedHashMap<Long, String> map = loader.loadJNativeEventsFromFile();
 
         assertEquals(1, map.size());
