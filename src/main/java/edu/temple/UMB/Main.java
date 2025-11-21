@@ -3,7 +3,6 @@ package edu.temple.UMB;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.LinkedHashMap;
 import java.util.Scanner;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
