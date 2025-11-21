@@ -37,7 +37,8 @@ public class MouseReplayer {
 
         // initialize robot so now so we have minimal overhead later
         try {
-            robot = new Robot();
+            GraphicsDevice defaultScreen = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            robot = new Robot(defaultScreen);
             logger.info("Key replay started with {} events", awtMouseEvents.size());
         } catch (AWTException e) {
             logger.fatal("Failed to initialize Robot for mouse replay", e);
@@ -59,9 +60,12 @@ public class MouseReplayer {
             robot.mouseMove(event.x, event.y);
         }
         else if (event.context.equals("MOUSE_PRESSED")) {
+            robot.mouseMove(event.x, event.y);
             robot.mousePress(event.button);
+
         }
         else if (event.context.equals("MOUSE_RELEASED")) {
+            robot.mouseMove(event.x, event.y);
             robot.mouseRelease(event.button);
         }
     }
@@ -70,9 +74,9 @@ public class MouseReplayer {
 
     static{
         jnativeToAwtMouse.put(NativeMouseEvent.NOBUTTON, MouseEvent.NOBUTTON);
-        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON1, MouseEvent.BUTTON1);
-        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON2, MouseEvent.BUTTON2);
-        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON3, MouseEvent.BUTTON3);
+        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON1, MouseEvent.BUTTON1_MASK);
+        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON2, MouseEvent.BUTTON2_MASK);
+        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON3, MouseEvent.BUTTON3_MASK);
     }
 
     private void JNativeToAWT(LinkedHashMap<Long, String> loadedJNativeHookMouseEvents) {
