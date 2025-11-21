@@ -58,8 +58,10 @@ public class Replayer {
         // add a shutdown hook to capture ctrl c and empty event queue (ensuring kr was actually initialized)
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Shutting down Replayer early.");
-            this.kr.scheduler.shutdownNow();
-            this.kr.releaseAllHeld();
+            if (this.kr != null){
+                this.kr.scheduler.shutdownNow();
+                this.kr.releaseAllHeld();
+            }
         }));
 
 
