@@ -61,6 +61,7 @@ public class NewKeyReplayer {
             throw new RuntimeException(e);
         }
 
+        // schedule events now, on start just release latch
         for (Long key : awtEvents.keySet()) {
             long delay = key;
             if (delay < 0) delay = 0;
@@ -88,8 +89,8 @@ public class NewKeyReplayer {
      * at the appropriate time relative to when playback begins. If an event's timestamp is in the past, it will be executed immediately.
      */
     public Long start() {
-        startNano = System.nanoTime();
-        startLatch.countDown();
+        startNano = System.nanoTime(); // reference point for event delays
+        startLatch.countDown(); // release latch
         return maxDelay + 150;
     }
 
