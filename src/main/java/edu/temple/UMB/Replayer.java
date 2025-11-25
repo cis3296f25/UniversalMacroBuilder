@@ -19,7 +19,7 @@ public class Replayer {
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
 
     Loader l;
-    NewKeyReplayer kr;
+    KeyReplayer kr;
 
     /**
      * Constructs a new {@code Replayer} from the given file path.
@@ -83,7 +83,7 @@ public class Replayer {
     private void playOnce() {
         logger.info("Starting replay iteration.");
 
-        this.kr = new NewKeyReplayer(loadedJNativeHookEvents);
+        this.kr = new KeyReplayer(loadedJNativeHookEvents);
         long timeNeeded = this.kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
 
         try {
