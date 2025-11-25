@@ -19,7 +19,7 @@ public class Replayer {
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
 
     Loader l;
-    KeyReplayer kr;
+    NewKeyReplayer kr;
 
     /**
      * Constructs a new {@code Replayer} from the given file path.
@@ -59,7 +59,7 @@ public class Replayer {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Shutting down Replayer early.");
             if (this.kr != null){
-                this.kr.scheduler.shutdownNow();
+                this.kr.exec.shutdownNow();
                 this.kr.releaseAllHeld();
             }
         }));
@@ -83,11 +83,11 @@ public class Replayer {
     private void playOnce() {
         logger.info("Starting replay iteration.");
 
-        this.kr = new KeyReplayer(loadedJNativeHookEvents);
+        this.kr = new NewKeyReplayer(loadedJNativeHookEvents);
         long timeNeeded = this.kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
 
         try {
-            this.kr.scheduler.awaitTermination(timeNeeded + 100, TimeUnit.MILLISECONDS);
+            this.kr.exec.awaitTermination(timeNeeded + 100, TimeUnit.MILLISECONDS);
             this.kr.releaseAllHeld(); // if for some reason a key is being held make sure it doesnt stay that way
         } catch (InterruptedException e) {
             logger.error("Replay interrupted", e);
