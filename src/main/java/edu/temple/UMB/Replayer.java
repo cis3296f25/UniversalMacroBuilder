@@ -9,7 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * The {@code Replayer} class loads, translates, and replays recorded input events (currently keyboard events, with mouse support planned for future versions).
+ * Loads recorded input events from disk and replays them.
+ * This implementation currently replays keyboard events via {@link KeyReplayer}.
+ * A negative repeat count enables continuous (infinite) playback.
  */
 public class Replayer {
     private static final Logger logger = LogManager.getLogger(Replayer.class);
@@ -22,10 +24,12 @@ public class Replayer {
     KeyReplayer kr;
 
     /**
-     * Constructs a new {@code Replayer} from the given file path.
-     * This constructor immediately loads and translates recorded keyboard events
-     * from the file, then initiates replay using {@link KeyReplayer}.
-     * @param inPath the path to the input file containing recorded JNativeHook events.
+     * Constructs a new {@code Replayer} that loads recorded events from a file.
+     * The constructor loads the raw JNativeHook events via {@link Loader} and prepares them for playback.
+     * Actual replay is started by calling {@link #start()}.
+     *
+     * @param inPath the path to the input file containing recorded JNativeHook events
+     * @param repeatCount the number of times to replay the sequence; use -1 for infinite replay
      */
     public Replayer(String inPath, int repeatCount){
         File inFile = new File(inPath);
@@ -49,8 +53,9 @@ public class Replayer {
     }
 
     /**
-     * Starts the replay of loaded events and waits briefly for completion.
-     * Shuts down the {@link KeyReplayer#scheduler} after scheduling and awaits termination for up to one second.
+     * Starts the replay of loaded events.
+     * For each iteration, this method creates a new {@link KeyReplayer}, calls {@link KeyReplayer#start()},
+     * then waits for the scheduled tasks to complete before ensuring any held keys are released.
      */
     public void start() {
         System.out.println("Starting Replayer. Press CTRL+C to exit Replayer early.");

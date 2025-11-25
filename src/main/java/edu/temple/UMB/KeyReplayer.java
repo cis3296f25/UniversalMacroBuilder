@@ -14,11 +14,11 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * Replays a sequence of translated keyboard {@link AWTReplayEvent}s at specific timestamps.
- * Uses a {@link ScheduledExecutorService} to schedule events and a {@link Robot} to emit key presses and releases.
- * Notes on timing and lifecycle:
- * Event delays are computed relative to when {@code start()} schedules tasks, based on each entry time in {@code awtEvents}.
- * This class does not block; callers are responsible for shutting down and awaiting the {@code scheduler} if needed.
+ * Replays a sequence of translated keyboard {@link AWTReplayEvent} items at precise timestamps.
+ * Backed by a single-threaded {@link ScheduledExecutorService} and a {@link Robot} for key emission.
+ * Timing is computed relative to the instant {@link #start()} is invoked.
+ * The executor schedules an automatic finish sequence: log completion, release any held keys, and shut down.
+ * Callers typically invoke {@link #start()} and then, if needed, await termination on {@link #exec}.
  */
 public class KeyReplayer {
     private static final Logger logger = LogManager.getLogger(KeyReplayer.class);
@@ -85,8 +85,12 @@ public class KeyReplayer {
     }
 
     /**
-     * Schedules and starts playback of specified event sequence. Schedules each event in {@code awtEvents} to execute
-     * at the appropriate time relative to when playback begins. If an event's timestamp is in the past, it will be executed immediately.
+     * Schedules and starts playback of the translated key events.
+     * Each entry in {@code awtEvents} is executed relative to the instant this method is called.
+     * If an entry's timestamp is already in the past, it will be executed immediately.
+     *
+     * @return the approximate number of milliseconds the caller should wait for all scheduled tasks to finish,
+     *         including a small buffer to release any held keys and shut down the executor
      */
     public Long start() {
         startNano = System.nanoTime(); // reference point for event delays
