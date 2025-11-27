@@ -29,7 +29,7 @@ public class Main {
     /**
      * Application entry point.
      */
-    public static void main(String[] args) throws InterruptedException, AWTException, Exception {
+    public static void main(String[] args) throws Exception {
         logger.info("Starting UMB.");
         //check if macro dir exists
         File macroDir = new File(MACRO_FOLDER_NAME);
@@ -47,7 +47,7 @@ public class Main {
             logger.debug("Macro folder already exists.");
         }
         String argsRes = argChecks(args);
-        if (argsRes != null) {
+        if (argsRes != null && !argsRes.equals("ERROR: No arguments given!")) {
             System.out.println(
                 "java -jar UniversalMacroBuilder.jar " +
                 "(-output <out_path> | -input <in_path>) " +
@@ -56,6 +56,11 @@ public class Main {
                 "[-l]"
             );
             throw new IllegalArgumentException(argsRes);
+        } else if (argsRes != null) {
+            // enter interactive mode. it will return an array of strings, which can conveniently just be passed to a new instance of main
+            String[] constructedArgs = interactiveMode();
+            main(constructedArgs);
+            exit(0);
         }
 
         if(listMacrosFlag){
@@ -116,6 +121,13 @@ public class Main {
             exit(1);
         }
 
+    }
+
+    private static String[] interactiveMode() {
+        // TODO: this will prompt users for info to build the command.
+        // it will start by asking whether the user wants to record or replay
+        // TODO: add a macro manipulation mode for renaming and deleting files
+        return null;
     }
 
     //list macros
