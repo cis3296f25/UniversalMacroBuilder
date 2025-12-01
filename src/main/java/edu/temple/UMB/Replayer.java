@@ -11,7 +11,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * The {@code Replayer} class loads, translates, and replays recorded input events (currently keyboard events, with mouse support planned for future versions).
+ * Loads, translates, and replays recorded input events.
+ * This class coordinates both keyboard and mouse replayers. Events are loaded from
+ * a file using dedicated loader classes, translated into AWT-friendly representations,
+ * and then scheduled for playback. The same input can be replayed multiple times
+ * according to the configured repeat count.
  */
 public class Replayer {
     private static final Logger logger = LogManager.getLogger(Replayer.class);
@@ -20,18 +24,18 @@ public class Replayer {
 
     private final int repeatCount;
 
-    
-
     Loader kl;
     MouseLoader ml;
     KeyReplayer kr;
     MouseReplayer mr;
 
     /**
-     * Constructs a new {@code Replayer} from the given file path.
-     * This constructor immediately loads and translates recorded keyboard events
-     * from the file, then initiates replay using {@link KeyReplayer}.
-     * @param inPath the path to the input file containing recorded JNativeHook events.
+     * Constructs a new replayer from the given file path.
+     * Loads recorded keyboard and mouse events, translates them, and prepares
+     * keyboard and mouse replayers for later execution.
+     *
+     * @param inPath path to the input file containing recorded JNativeHook events
+     * @param repeatCount number of times to replay the macro; use -1 for infinite
      */
     public Replayer(String inPath, int repeatCount){
         File inFile = new File(inPath);

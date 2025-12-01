@@ -16,9 +16,15 @@ import java.util.concurrent.locks.LockSupport;
 
 import com.github.kwhat.jnativehook.mouse.NativeMouseEvent;
 
+/**
+ * Replays translated mouse events using AWT Robot.
+ * Events are scheduled relative to the time start is called. The class translates
+ * JNativeHook mouse records into AWT friendly events, schedules them on a single
+ * thread, and drives the system cursor and buttons via Robot.
+ */
 public class MouseReplayer {
     private static final Logger logger = LogManager.getLogger(MouseReplayer.class);
-    private static Map<Integer, Integer> jnativeToAwtMouse = new HashMap<>();
+    private static final Map<Integer, Integer> jnativeToAwtMouse = new HashMap<>();
     // ordered mapping of timestamps to AWTReplayEvents
     LinkedHashMap<Long, AWTReplayMouseEvent> awtMouseEvents = new LinkedHashMap<>();
     public final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
@@ -26,11 +32,18 @@ public class MouseReplayer {
     private volatile long startNano;
     // system time when replay was started
     // the (lazy instantiation) of the Robot class to be used for actual replay
-    private Robot robot;
+    private final Robot robot;
     double scaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96.0;
     long maxDelay = 0L;
 
-    public MouseReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
+    /**
+         * Creates a mouse replayer from raw JNativeHook mouse events.
+         * Translates the input into AWT events, initializes a Robot, and schedules
+         * execution of each event relative to the time start is called.
+         * @param loadedJNativeHookEvents timestamp to raw event mapping as loaded by MouseLoader
+         * @throws RuntimeException when Robot cannot be initialized
+         */
+        public MouseReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
         // translate those events to AWT events
         JNativeToAWT(loadedJNativeHookEvents);
 
@@ -72,12 +85,20 @@ public class MouseReplayer {
         exec.submit(exec::shutdown, maxDelay + 150);
     }
 
-    public Long start() {
+    /**
+     * Begins playback of all scheduled mouse events.
+     * The schedule is evaluated relative to the instant this method is called.
+     */
+    public void start() {
         startNano = System.nanoTime(); // reference point for event delays
         startLatch.countDown(); // release latch
-        return maxDelay + 150;
     }
 
+/**
+     * Executes a single translated mouse event.
+     * Moves the cursor when needed and presses or releases buttons according to the event context.
+     * @param event the mouse event to execute
+     */
     private void executeEvent(AWTReplayMouseEvent event) {
         logger.debug("Executing {} with code {}", event.context, event.button);
         switch (event.context) {
@@ -94,6 +115,12 @@ public class MouseReplayer {
         }
     }
 
+    /**
+     * Returns the maximum scheduled delay among mouse events.
+     * This indicates approximately how long playback will take from start
+     * until the last event is executed.
+     * @return delay in milliseconds from start to the last scheduled event
+     */
     public Long getMaxDelay() {
         return  maxDelay;
     }
@@ -105,6 +132,13 @@ public class MouseReplayer {
         jnativeToAwtMouse.put(NativeMouseEvent.BUTTON3, MouseEvent.BUTTON2_MASK);
     }
 
+/**
+     * Translates recorded JNativeHook mouse events into AWT-compatible events.
+     * Each input entry is parsed into context, coordinates, and button value,
+     * then converted into an {@link AWTReplayMouseEvent} for scheduling.
+     * Unmapped codes are skipped with a warning.
+     * @param loadedJNativeHookMouseEvents timestamp to raw event mapping as loaded by MouseLoader
+     */
     private void JNativeToAWT(LinkedHashMap<Long, String> loadedJNativeHookMouseEvents) {
         for (Long key : loadedJNativeHookMouseEvents.keySet()) {
             String[] parts = loadedJNativeHookMouseEvents.get(key).split("-");

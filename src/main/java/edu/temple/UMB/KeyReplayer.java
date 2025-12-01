@@ -116,6 +116,11 @@ public class KeyReplayer {
         }
     }
 
+    /**
+     * Releases any keys that are still in the pressed state.
+     * This is a safety measure to avoid leaving modifier or other keys held
+     * if playback is interrupted or a release event was not scheduled.
+     */
     public void releaseAllHeld() {
         for (Integer key : keysDown) {
             try {
@@ -126,6 +131,11 @@ public class KeyReplayer {
         keysDown.clear();
     }
 
+    /**
+     * Returns the largest scheduled delay among all translated events.
+     * This value can be used to determine how long to wait for playback to complete.
+     * @return maximum delay in milliseconds from start to the last scheduled event
+     */
     public Long getMaxDelay() {
         return  maxDelay;
     }
