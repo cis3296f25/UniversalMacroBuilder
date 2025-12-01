@@ -24,6 +24,7 @@ public class MouseReplayer {
     // system time when replay was started
     // the (lazy instantiation) of the Robot class to be used for actual replay
     private Robot robot;
+    double scaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96.0;
 
     public MouseReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
         // translate those events to AWT events
@@ -57,15 +58,15 @@ public class MouseReplayer {
     private void executeEvent(AWTReplayMouseEvent event) {
         logger.debug("Executing {} with code {}", event.context, event.button);
         if (event.context.equals("MOUSE_MOVED") || event.context.equals("MOUSE_DRAGGED")) {
-            robot.mouseMove(event.x, event.y);
+            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
         }
         else if (event.context.equals("MOUSE_PRESSED")) {
-            robot.mouseMove(event.x, event.y);
+            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
             robot.mousePress(event.button);
 
         }
         else if (event.context.equals("MOUSE_RELEASED")) {
-            robot.mouseMove(event.x, event.y);
+            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
             robot.mouseRelease(event.button);
         }
     }

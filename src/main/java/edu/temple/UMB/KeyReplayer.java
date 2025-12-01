@@ -33,7 +33,7 @@ public class KeyReplayer {
 
     /**
      * Constructor for {@link KeyReplayer}.
-     * @param loadedJNativeHookEvents The JNativeHook events returned by {@link Loader}.
+     * @param loadedJNativeHookEvents The JNativeHook events returned by {@link KeyLoader}.
      * @throws RuntimeException if the {@link Robot} cannot be created (e.g., if the environment does not support AWT operations).
      */
     public KeyReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
