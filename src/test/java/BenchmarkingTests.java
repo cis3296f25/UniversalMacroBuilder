@@ -20,7 +20,7 @@ import java.util.concurrent.*;
 // allows before all annotation to be non-static, see https://docs.junit.org/current/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.Lifecycle.html
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BenchmarkingTests {
-    boolean benchmarking = true;
+    boolean benchmarking = false;
     // TODO: test fast keyboard inputs (and mouse!)
     private final String predeterminedEvents = """
 START KEY EVENTS
