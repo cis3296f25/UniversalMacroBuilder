@@ -19,7 +19,7 @@ public class Replayer {
     private LinkedHashMap<Long, String> loadedJNativeHookMouseEvents = new LinkedHashMap<>();
 
 
-    KeyLoader kl;
+    Loader kl;
     MouseLoader ml;
     KeyReplayer kr;
     MouseReplayer mr;
@@ -32,7 +32,7 @@ public class Replayer {
      */
     public Replayer(String inPath) {
         this.inFile = new File(inPath);
-        kl = new KeyLoader(inFile);
+        kl = new Loader(inFile);
 
 
         // load events from file
