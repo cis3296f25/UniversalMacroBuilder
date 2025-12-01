@@ -8,9 +8,11 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import com.github.kwhat.jnativehook.mouse.NativeMouseEvent;
 
@@ -19,12 +21,14 @@ public class MouseReplayer {
     private static Map<Integer, Integer> jnativeToAwtMouse = new HashMap<>();
     // ordered mapping of timestamps to AWTReplayEvents
     LinkedHashMap<Long, AWTReplayMouseEvent> awtMouseEvents = new LinkedHashMap<>();
-    // the scheduler we will use to enable accurate playback. TODO: make this private and have this class auto terminate after last event
-    public final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    public final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+    private final CountDownLatch startLatch = new CountDownLatch(1);
+    private volatile long startNano;
     // system time when replay was started
     // the (lazy instantiation) of the Robot class to be used for actual replay
     private Robot robot;
     double scaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96.0;
+    long maxDelay = 0L;
 
     public MouseReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
         // translate those events to AWT events
@@ -40,34 +44,53 @@ public class MouseReplayer {
         try {
             GraphicsDevice defaultScreen = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
             robot = new Robot(defaultScreen);
-            logger.info("Key replay started with {} events", awtMouseEvents.size());
+            logger.info("Mouse replay started with {} events", awtMouseEvents.size());
         } catch (AWTException e) {
             logger.fatal("Failed to initialize Robot for mouse replay", e);
             throw new RuntimeException(e);
         }
-    }
 
-    public void start() {
+        // schedule events now, on start just release latch
         for (Long key : awtMouseEvents.keySet()) {
             long delay = key;
             if (delay < 0) delay = 0;
-            scheduler.schedule(() -> executeEvent(awtMouseEvents.get(key)), delay, TimeUnit.MILLISECONDS);
+            maxDelay = Math.max(delay, maxDelay);
+            exec.submit(() -> {
+                try {
+                    startLatch.await();
+                    long target = startNano + TimeUnit.MILLISECONDS.toNanos(key);
+                    long now;
+                    while ((now = System.nanoTime()) < target) {
+                        LockSupport.parkNanos(target - now);
+                    }
+                    executeEvent(awtMouseEvents.get(key));
+                } catch (InterruptedException ignored) {
+                }
+            });
         }
+        exec.submit(() -> logger.info("Mouse replay finished!"), maxDelay + 50);
+        exec.submit(exec::shutdown, maxDelay + 150);
+    }
+
+    public Long start() {
+        startNano = System.nanoTime(); // reference point for event delays
+        startLatch.countDown(); // release latch
+        return maxDelay + 150;
     }
 
     private void executeEvent(AWTReplayMouseEvent event) {
         logger.debug("Executing {} with code {}", event.context, event.button);
-        if (event.context.equals("MOUSE_MOVED") || event.context.equals("MOUSE_DRAGGED")) {
-            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
-        }
-        else if (event.context.equals("MOUSE_PRESSED")) {
-            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
-            robot.mousePress(event.button);
-
-        }
-        else if (event.context.equals("MOUSE_RELEASED")) {
-            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
-            robot.mouseRelease(event.button);
+        switch (event.context) {
+            case "MOUSE_MOVED", "MOUSE_DRAGGED" ->
+                    robot.mouseMove((int) (event.x / scaleFactor), (int) (event.y / scaleFactor));
+            case "MOUSE_PRESSED" -> {
+                robot.mouseMove((int) (event.x / scaleFactor), (int) (event.y / scaleFactor));
+                robot.mousePress(event.button);
+            }
+            case "MOUSE_RELEASED" -> {
+                robot.mouseMove((int) (event.x / scaleFactor), (int) (event.y / scaleFactor));
+                robot.mouseRelease(event.button);
+            }
         }
     }
 
