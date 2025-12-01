@@ -7,8 +7,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static java.lang.Thread.sleep;
-
 /**
  * The {@code Replayer} class loads, translates, and replays recorded input events (currently keyboard events, with mouse support planned for future versions).
  */
@@ -18,6 +16,9 @@ public class Replayer {
     private LinkedHashMap<Long, String> loadedJNativeHookEvents = new LinkedHashMap<>();
     private LinkedHashMap<Long, String> loadedJNativeHookMouseEvents = new LinkedHashMap<>();
 
+    private final int repeatCount;
+
+    
 
     Loader kl;
     MouseLoader ml;
@@ -30,10 +31,14 @@ public class Replayer {
      * from the file, then initiates replay using {@link KeyReplayer}.
      * @param inPath the path to the input file containing recorded JNativeHook events.
      */
-    public Replayer(String inPath) {
-        this.inFile = new File(inPath);
-        kl = new Loader(inFile);
+    public Replayer(String inPath, int repeatCount){
+        File inFile = new File(inPath);
+        this.repeatCount = repeatCount;
 
+        logger.info("Initializing Replayer with file: {}", inFile.getAbsolutePath());
+        logger.info("Repeat count set to: {}", repeatCount);
+
+        l = new Loader(inFile);
 
         // load events from file
         try {
@@ -73,14 +78,44 @@ public class Replayer {
         kr.scheduler.shutdown();
         mr.scheduler.shutdown();// TODO: why are we only waiting one second here? most likely causing bug where macros over a second arent really working
 
-        // wait for KeyReplayer thread to exit
+        // add a shutdown hook to capture ctrl c and empty event queue (ensuring kr was actually initialized)
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Shutting down Replayer early.");
+            if (this.kr != null){
+                this.kr.scheduler.shutdownNow();
+                this.kr.releaseAllHeld();
+            }
+        }));
+
+
+        if (repeatCount ==-1){
+            logger.info("Infinite replay mode.");
+            while (true){
+                playOnce();
+            }
+        }
+        else{
+            logger.info("Replaying {} times.", repeatCount);
+            for (int i = 0; i < repeatCount; i++){
+                playOnce();
+            }
+        }
+        logger.info("Replay finished.");
+    }
+
+    private void playOnce() {
+        logger.info("Starting replay iteration.");
+
+        this.kr = new KeyReplayer(loadedJNativeHookEvents);
+        long timeNeeded = this.kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
+
         try {
-            kr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
-            mr.scheduler.awaitTermination(1, TimeUnit.SECONDS);
-            logger.info("Replay finished");
+            this.kr.scheduler.awaitTermination(timeNeeded + 100, TimeUnit.MILLISECONDS);
+            this.mr.scheduler.awaitTermination(timeNeeded + 100, TimeUnit.MILLISECONDS);
+            this.kr.releaseAllHeld(); // if for some reason a key is being held make sure it doesnt stay that way
         } catch (InterruptedException e) {
             logger.error("Replay interrupted", e);
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
         }
     }
 }
