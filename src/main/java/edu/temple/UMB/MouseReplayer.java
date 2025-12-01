@@ -76,8 +76,8 @@ public class MouseReplayer {
     static{
         jnativeToAwtMouse.put(NativeMouseEvent.NOBUTTON, MouseEvent.NOBUTTON);
         jnativeToAwtMouse.put(NativeMouseEvent.BUTTON1, MouseEvent.BUTTON1_MASK);
-        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON2, MouseEvent.BUTTON2_MASK);
-        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON3, MouseEvent.BUTTON3_MASK);
+        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON2, MouseEvent.BUTTON3_MASK);
+        jnativeToAwtMouse.put(NativeMouseEvent.BUTTON3, MouseEvent.BUTTON2_MASK);
     }
 
     private void JNativeToAWT(LinkedHashMap<Long, String> loadedJNativeHookMouseEvents) {
