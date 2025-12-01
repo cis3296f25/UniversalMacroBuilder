@@ -3,6 +3,7 @@ package edu.temple.UMB;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.Scanner;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +25,8 @@ public class Main {
     public static String stopKey = "ESCAPE";
     public static boolean listMacrosFlag = false;
     private static final String MACRO_FOLDER_NAME = "macros";
-    public static Integer repeatCount = null; 
+    public static Integer repeatCount = null;
+    private static final Scanner SC = new Scanner(System.in);
 
     /**
      * Application entry point.
@@ -58,8 +60,8 @@ public class Main {
             throw new IllegalArgumentException(argsRes);
         } else if (argsRes != null) {
             // enter interactive mode. it will return an array of strings, which can conveniently just be passed to a new instance of main
-            String[] constructedArgs = interactiveMode();
-            main(constructedArgs);
+            String[] constructedArgs = interactiveMode(macroDir);
+            // main(constructedArgs); TODO: uncomment this line when interactive mode builds command correctly
             exit(0);
         }
 
@@ -103,10 +105,11 @@ public class Main {
                 logger.info("File exists: {}", outFile.getAbsolutePath());
                 System.out.println("[WARNING] File already exists: " + outFile.getName());
                 System.out.println("Overwrite? (y/n): ");
-                int response = System.in.read();
+                int response = SC.nextInt();
                 if (response != 'y' && response != 'Y') {
                     logger.fatal("User disallowed overwriting of: {}", outFile.getAbsolutePath());
                     System.out.println("Recording cancelled.");
+                    SC.close();
                     exit(0);
                 }
                 logger.info("User approved overwriting of: {}", outFile.getAbsolutePath());
@@ -118,17 +121,80 @@ public class Main {
             recorder.start();
         } else {
             System.out.println("How the hell did you end up here?");
+            SC.close();
             exit(1);
         }
 
+        // done with program
+        SC.close();
+        exit(0);
     }
 
-    private static String[] interactiveMode() {
+    private static String[] interactiveMode(File macroDir) {
         // TODO: this will prompt users for info to build the command.
+        ArrayList<String> new_args = new ArrayList<>();
         // it will start by asking whether the user wants to record or replay
         // TODO: add a macro manipulation mode for renaming and deleting files
+        int selected_action = getAndValidateIntInput("What would you like to do?\n\t1: Record a macro.\n\t2: Replay a macro.\nSelect action: ", new int[]{1, 2});
+        if  (selected_action == 1) {
+            new_args.add("-output");
+            String new_macro_name = getNewMacroName("Name of the macro to be recorded: ");
+            System.out.println(new_macro_name);
+            // TODO: left off here. next up, extract how the above verifies macro name and approves overwriting and use it here.
+
+        }
+
         return null;
     }
+
+    private static String getNewMacroName(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String line = SC.nextLine();
+            if (line == null || line.isEmpty()) {
+                System.out.println("Try again.");
+            } else {
+                return line;
+            }
+        }
+    }
+
+
+
+    // gets an int from the cmd line and validates it to ensure it exists in valid.
+    // if valid is null then there is no validation.
+    private static int getAndValidateIntInput(String prompt, int[] valid) {
+        while (true) {
+            System.out.print(prompt);
+            String line = SC.nextLine();
+            int in;
+
+            try {
+                in = Integer.parseInt(line.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                continue;
+            }
+
+            if (valid == null)
+                return in;
+
+            boolean ok = false;
+            for (int v : valid) {
+                if (v == in) {
+                    ok = true;
+                    break;
+                }
+            }
+
+            if (ok)
+                return in;
+
+            System.out.println("Invalid input. Please try again.");
+        }
+    }
+
+
 
     //list macros
     private static void listMacros(File macroDir){
@@ -171,11 +237,11 @@ public class Main {
      * @return {@code null} if valid, otherwise an error string suitable for an exception message
      */
     public static String argChecks(String[] args) {
-        logger.trace("Arguments provided: {}", String.join(" ", args));
-        if (args.length == 0) {
+        if (args == null || args.length == 0) {
             logger.fatal("No arguments given!");
             return "ERROR: No arguments given!";
         }
+        logger.trace("Arguments provided: {}", String.join(" ", args));
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "-output" -> {
