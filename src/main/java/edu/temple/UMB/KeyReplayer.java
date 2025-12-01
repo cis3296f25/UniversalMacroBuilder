@@ -126,6 +126,10 @@ public class KeyReplayer {
         keysDown.clear();
     }
 
+    public Long getMaxDelay() {
+        return  maxDelay;
+    }
+
     static {
         // Letters
         jnativeToAwt.put(NativeKeyEvent.VC_A, KeyEvent.VK_A);

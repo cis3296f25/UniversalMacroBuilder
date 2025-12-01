@@ -118,7 +118,7 @@ public class Replayer {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            Long krTimeNeeded = kr.start();
+            kr.start();
         });
 
         exec.submit(() -> {
@@ -127,15 +127,15 @@ public class Replayer {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            Long mrTimeNeeded = mr.start();
+            mr.start();
         });
 
         // synchronize start
         latch.countDown();
 
         try {
-            this.kr.exec.awaitTermination(krTimeNeeded + 100, TimeUnit.MILLISECONDS);
-            this.mr.exec.awaitTermination(mrTimeNeeded + 100, TimeUnit.MILLISECONDS);
+            this.kr.exec.awaitTermination(kr.getMaxDelay() + 100, TimeUnit.MILLISECONDS);
+            this.mr.exec.awaitTermination(mr.getMaxDelay() + 100, TimeUnit.MILLISECONDS);
             this.kr.releaseAllHeld(); // if for some reason a key is being held make sure it doesnt stay that way
             // TODO: mouse replay release held?
         } catch (InterruptedException e) {

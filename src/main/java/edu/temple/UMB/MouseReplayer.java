@@ -94,7 +94,9 @@ public class MouseReplayer {
         }
     }
 
-
+    public Long getMaxDelay() {
+        return  maxDelay;
+    }
 
     static{
         jnativeToAwtMouse.put(NativeMouseEvent.NOBUTTON, MouseEvent.NOBUTTON);
