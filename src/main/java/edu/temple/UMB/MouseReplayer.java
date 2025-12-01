@@ -8,25 +8,42 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import com.github.kwhat.jnativehook.mouse.NativeMouseEvent;
 
+/**
+ * Replays translated mouse events using AWT Robot.
+ * Events are scheduled relative to the time start is called. The class translates
+ * JNativeHook mouse records into AWT friendly events, schedules them on a single
+ * thread, and drives the system cursor and buttons via Robot.
+ */
 public class MouseReplayer {
     private static final Logger logger = LogManager.getLogger(MouseReplayer.class);
-    private static Map<Integer, Integer> jnativeToAwtMouse = new HashMap<>();
+    private static final Map<Integer, Integer> jnativeToAwtMouse = new HashMap<>();
     // ordered mapping of timestamps to AWTReplayEvents
     LinkedHashMap<Long, AWTReplayMouseEvent> awtMouseEvents = new LinkedHashMap<>();
-    // the scheduler we will use to enable accurate playback. TODO: make this private and have this class auto terminate after last event
-    public final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    public final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+    private final CountDownLatch startLatch = new CountDownLatch(1);
+    private volatile long startNano;
     // system time when replay was started
     // the (lazy instantiation) of the Robot class to be used for actual replay
-    private Robot robot;
+    private final Robot robot;
     double scaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96.0;
+    long maxDelay = 0L;
 
-    public MouseReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
+    /**
+         * Creates a mouse replayer from raw JNativeHook mouse events.
+         * Translates the input into AWT events, initializes a Robot, and schedules
+         * execution of each event relative to the time start is called.
+         * @param loadedJNativeHookEvents timestamp to raw event mapping as loaded by MouseLoader
+         * @throws RuntimeException when Robot cannot be initialized
+         */
+        public MouseReplayer(LinkedHashMap<Long, String> loadedJNativeHookEvents) throws RuntimeException {
         // translate those events to AWT events
         JNativeToAWT(loadedJNativeHookEvents);
 
@@ -40,38 +57,73 @@ public class MouseReplayer {
         try {
             GraphicsDevice defaultScreen = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
             robot = new Robot(defaultScreen);
-            logger.info("Key replay started with {} events", awtMouseEvents.size());
+            logger.info("Mouse replay started with {} events", awtMouseEvents.size());
         } catch (AWTException e) {
             logger.fatal("Failed to initialize Robot for mouse replay", e);
             throw new RuntimeException(e);
         }
-    }
 
-    public void start() {
+        // schedule events now, on start just release latch
         for (Long key : awtMouseEvents.keySet()) {
             long delay = key;
             if (delay < 0) delay = 0;
-            scheduler.schedule(() -> executeEvent(awtMouseEvents.get(key)), delay, TimeUnit.MILLISECONDS);
+            maxDelay = Math.max(delay, maxDelay);
+            exec.submit(() -> {
+                try {
+                    startLatch.await();
+                    long target = startNano + TimeUnit.MILLISECONDS.toNanos(key);
+                    long now;
+                    while ((now = System.nanoTime()) < target) {
+                        LockSupport.parkNanos(target - now);
+                    }
+                    executeEvent(awtMouseEvents.get(key));
+                } catch (InterruptedException ignored) {
+                }
+            });
         }
+        exec.submit(() -> logger.info("Mouse replay finished!"), maxDelay + 50);
+        exec.submit(exec::shutdown, maxDelay + 150);
     }
 
+    /**
+     * Begins playback of all scheduled mouse events.
+     * The schedule is evaluated relative to the instant this method is called.
+     */
+    public void start() {
+        startNano = System.nanoTime(); // reference point for event delays
+        startLatch.countDown(); // release latch
+    }
+
+/**
+     * Executes a single translated mouse event.
+     * Moves the cursor when needed and presses or releases buttons according to the event context.
+     * @param event the mouse event to execute
+     */
     private void executeEvent(AWTReplayMouseEvent event) {
         logger.debug("Executing {} with code {}", event.context, event.button);
-        if (event.context.equals("MOUSE_MOVED") || event.context.equals("MOUSE_DRAGGED")) {
-            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
-        }
-        else if (event.context.equals("MOUSE_PRESSED")) {
-            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
-            robot.mousePress(event.button);
-
-        }
-        else if (event.context.equals("MOUSE_RELEASED")) {
-            robot.mouseMove((int)(event.x / scaleFactor),(int) (event.y / scaleFactor));
-            robot.mouseRelease(event.button);
+        switch (event.context) {
+            case "MOUSE_MOVED", "MOUSE_DRAGGED" ->
+                    robot.mouseMove((int) (event.x / scaleFactor), (int) (event.y / scaleFactor));
+            case "MOUSE_PRESSED" -> {
+                robot.mouseMove((int) (event.x / scaleFactor), (int) (event.y / scaleFactor));
+                robot.mousePress(event.button);
+            }
+            case "MOUSE_RELEASED" -> {
+                robot.mouseMove((int) (event.x / scaleFactor), (int) (event.y / scaleFactor));
+                robot.mouseRelease(event.button);
+            }
         }
     }
 
-
+    /**
+     * Returns the maximum scheduled delay among mouse events.
+     * This indicates approximately how long playback will take from start
+     * until the last event is executed.
+     * @return delay in milliseconds from start to the last scheduled event
+     */
+    public Long getMaxDelay() {
+        return  maxDelay;
+    }
 
     static{
         jnativeToAwtMouse.put(NativeMouseEvent.NOBUTTON, MouseEvent.NOBUTTON);
@@ -80,6 +132,13 @@ public class MouseReplayer {
         jnativeToAwtMouse.put(NativeMouseEvent.BUTTON3, MouseEvent.BUTTON2_MASK);
     }
 
+/**
+     * Translates recorded JNativeHook mouse events into AWT-compatible events.
+     * Each input entry is parsed into context, coordinates, and button value,
+     * then converted into an {@link AWTReplayMouseEvent} for scheduling.
+     * Unmapped codes are skipped with a warning.
+     * @param loadedJNativeHookMouseEvents timestamp to raw event mapping as loaded by MouseLoader
+     */
     private void JNativeToAWT(LinkedHashMap<Long, String> loadedJNativeHookMouseEvents) {
         for (Long key : loadedJNativeHookMouseEvents.keySet()) {
             String[] parts = loadedJNativeHookMouseEvents.get(key).split("-");
