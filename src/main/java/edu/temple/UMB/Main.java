@@ -3,6 +3,7 @@ package edu.temple.UMB;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import org.apache.logging.log4j.Logger;
@@ -130,7 +131,7 @@ public class Main {
         exit(0);
     }
 
-    private static String[] interactiveMode(File macroDir) {
+    private static String[] interactiveMode(File macroDir) throws IOException {
         // TODO: this will prompt users for info to build the command.
         ArrayList<String> new_args = new ArrayList<>();
         // it will start by asking whether the user wants to record or replay
@@ -140,8 +141,61 @@ public class Main {
             new_args.add("-output");
             String new_macro_name = getNewMacroName("Name of the macro to be recorded: ");
             System.out.println(new_macro_name);
-            // TODO: left off here. next up, extract how the above verifies macro name and approves overwriting and use it here.
+            File outFile = new File(macroDir, new_macro_name);
 
+            //ask if user wants to overwrite
+            if (outFile.exists()){
+                logger.info("File exists: {}", outFile.getAbsolutePath());
+                System.out.println("[WARNING] File already exists: " + outFile.getName());
+                System.out.println("Overwrite? (y/n): ");
+                int response = SC.nextInt();
+                if (response != 'y' && response != 'Y') {
+                    logger.fatal("User disallowed overwriting of: {}", outFile.getAbsolutePath());
+                    System.out.println("Recording cancelled.");
+                    SC.close();
+                    exit(0);
+                }
+                logger.info("User approved overwriting of: {}", outFile.getAbsolutePath());
+            }
+            new FileWriter(outFile, false).close(); 
+            logger.info("Recording to file: {}", outFile.getAbsolutePath());
+            System.out.println("[INFO] Recording macro: " + outFile.getName());
+            Recorder recorder = new Recorder(outFile, stopKey);
+            recorder.start();
+        }
+        else if (selected_action == 2){
+            new_args.add("-input");
+            String macro_name = getNewMacroName("Name of the macro to be replayed: ");
+            System.out.println(macro_name);
+            File inFile = new File(macroDir, macro_name);
+            
+            Boolean repeating = yesOrNoPrompt("Would you like the macro to repeat?");
+            if (repeating){
+                repeatCount = getNumberOfRepeats("How many times would you like it to repeat? (enter -1 for infinite)");
+            }
+
+            if (!inFile.exists()){
+                logger.fatal("File not found: {}", in_file_str);
+                System.out.println("[ERROR] Macro file not found: " + inFile.getAbsolutePath());
+                listMacros(macroDir);
+
+                //user can select which macro
+                File selected = promptUserForMacro(macroDir);
+                if(selected ==null){
+                    System.out.println("No valid selection. Exiting.");
+                    exit(1);
+                }
+                inFile = selected;
+            }
+
+            logger.info("Replaying macro: {}", inFile.getAbsolutePath());
+            System.out.println("[INFO] Replaying macro: " + inFile.getName());
+            
+            // DEFAULT: 1 replay
+            int rc = (repeatCount == null ? 1 : repeatCount);
+
+            // Normal repeat via Replayer handling it internally
+            new Replayer(inFile.getAbsolutePath(), rc).start();
         }
 
         return null;
@@ -158,6 +212,34 @@ public class Main {
             }
         }
     }
+
+    private static int getNumberOfRepeats(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            if (!SC.hasNextInt()) {
+                System.out.println("Try again.");
+            }
+            return SC.nextInt();
+        }
+    }
+
+    //returns true for yes and false for no
+    private static Boolean yesOrNoPrompt(String prompt) {
+        while (true) {
+            System.out.println(prompt);
+            int response = SC.nextInt();
+            if (response != 'y' && response != 'Y') {
+                return true;
+            }
+            else if (response != 'n' && response != 'N'){
+                return false;
+            }
+            else{
+                System.out.println("Try again.");
+            }
+        }
+    }
+
 
 
 
