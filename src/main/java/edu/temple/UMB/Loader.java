@@ -31,22 +31,23 @@ public class Loader {
     public LinkedHashMap<Long, String> loadJNativeEventsFromFile() throws FileNotFoundException {
         LinkedHashMap<Long, String> map = new LinkedHashMap<>();
         logger.debug("Loading JNativeHook key events from file: {}", inFile.getAbsolutePath());
-        Scanner sc = new Scanner(inFile);
         int lineCount = 0;
-        while (sc.hasNextLine()) {
-            String line = sc.nextLine();
-            lineCount++;
-            if (line.equals("START KEY EVENTS")) {
-                // should be first line of file. skip
-                continue;
-            } else if (line.equals("END KEY EVENTS")) {
-                // finished keyEvents. our job here is done
-                sc.close();
-                break;
+        // Ensure the Scanner is always closed to release the file handle on Windows
+        try (Scanner sc = new Scanner(inFile)) {
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                lineCount++;
+                if (line.equals("START KEY EVENTS")) {
+                    // should be first line of file. skip
+                    continue;
+                } else if (line.equals("END KEY EVENTS")) {
+                    // finished keyEvents. our job here is done
+                    break;
+                }
+                // parse line and add to map
+                String[] parts = line.split(" ");
+                map.put(Long.parseLong(parts[0]), parts[1] + "_" + parts[2]);
             }
-            // parse line and add to map
-            String[] parts = line.split(" ");
-            map.put(Long.parseLong(parts[0]), parts[1] + "_" + parts[2]);
         }
         logger.info("Loaded {} events from file {} ({} lines read)", map.size(), inFile.getAbsolutePath(), lineCount);
         
