@@ -2,6 +2,9 @@ package edu.temple.UMB;
 
 import java.io.File;
 import java.util.LinkedHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
@@ -105,11 +108,33 @@ public class Replayer {
 
         this.kr = new KeyReplayer(loadedJNativeHookEvents);
         this.mr  = new MouseReplayer(loadedJNativeHookMouseEvents);
-        long krTimeNeeded = this.kr.start(); // TODO: when replaying mouse events as well ensure we start them both at the same time with scheduledexecutor
-        long mrTimeNeeded = this.mr.start();
+
+        ExecutorService exec = Executors.newFixedThreadPool(2);
+        CountDownLatch latch = new CountDownLatch(1);
+
+        exec.submit(() -> {
+            try {
+                latch.await();  // both wait for signal
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            Long krTimeNeeded = kr.start();
+        });
+
+        exec.submit(() -> {
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            Long mrTimeNeeded = mr.start();
+        });
+
+        // synchronize start
+        latch.countDown();
 
         try {
-            this.kr.exec.awaitTermination(krTimeNeeded+ 100, TimeUnit.MILLISECONDS);
+            this.kr.exec.awaitTermination(krTimeNeeded + 100, TimeUnit.MILLISECONDS);
             this.mr.exec.awaitTermination(mrTimeNeeded + 100, TimeUnit.MILLISECONDS);
             this.kr.releaseAllHeld(); // if for some reason a key is being held make sure it doesnt stay that way
             // TODO: mouse replay release held?
