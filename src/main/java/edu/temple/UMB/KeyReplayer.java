@@ -92,10 +92,9 @@ public class KeyReplayer {
      * @return the approximate number of milliseconds the caller should wait for all scheduled tasks to finish,
      *         including a small buffer to release any held keys and shut down the executor
      */
-    public Long start() {
+    public void start() {
         startNano = System.nanoTime(); // reference point for event delays
         startLatch.countDown(); // release latch
-        return maxDelay + 150;
     }
 
     /**
