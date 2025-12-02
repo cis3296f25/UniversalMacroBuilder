@@ -147,9 +147,8 @@ public class Main {
             if (outFile.exists()){
                 logger.info("File exists: {}", outFile.getAbsolutePath());
                 System.out.println("[WARNING] File already exists: " + outFile.getName());
-                System.out.println("Overwrite? (y/n): ");
-                int response = SC.nextInt();
-                if (response != 'y' && response != 'Y') {
+                Boolean response = yesOrNoPrompt("Overwrite? (y/n)");
+                if (!response) {
                     logger.fatal("User disallowed overwriting of: {}", outFile.getAbsolutePath());
                     System.out.println("Recording cancelled.");
                     SC.close();
@@ -168,11 +167,6 @@ public class Main {
             String macro_name = getNewMacroName("Name of the macro to be replayed: ");
             System.out.println(macro_name);
             File inFile = new File(macroDir, macro_name);
-            
-            Boolean repeating = yesOrNoPrompt("Would you like the macro to repeat?");
-            if (repeating){
-                repeatCount = getNumberOfRepeats("How many times would you like it to repeat? (enter -1 for infinite)");
-            }
 
             if (!inFile.exists()){
                 logger.fatal("File not found: {}", in_file_str);
@@ -188,6 +182,10 @@ public class Main {
                 inFile = selected;
             }
 
+            Boolean repeating = yesOrNoPrompt("Would you like the macro to repeat? (y/n)");
+            if (repeating){
+                repeatCount = getNumberOfRepeats("How many times would you like it to repeat? (enter -1 for infinite)\n");
+            }
             logger.info("Replaying macro: {}", inFile.getAbsolutePath());
             System.out.println("[INFO] Replaying macro: " + inFile.getName());
             
@@ -223,22 +221,23 @@ public class Main {
         }
     }
 
-    //returns true for yes and false for no
-    private static Boolean yesOrNoPrompt(String prompt) {
-        while (true) {
-            System.out.println(prompt);
-            int response = SC.nextInt();
-            if (response != 'y' && response != 'Y') {
-                return true;
-            }
-            else if (response != 'n' && response != 'N'){
-                return false;
-            }
-            else{
-                System.out.println("Try again.");
-            }
+// returns true for yes and false for no
+private static Boolean yesOrNoPrompt(String prompt) {
+    Scanner scanner = new Scanner(System.in);
+    while (true) {
+        System.out.println(prompt);
+        String input = scanner.nextLine().trim();
+
+        if (input.equalsIgnoreCase("y")) {
+            return true;
+        } else if (input.equalsIgnoreCase("n")) {
+            return false;
+        } else {
+            System.out.println("Try again. Enter 'y' or 'n'.");
         }
     }
+}
+
 
 
 
