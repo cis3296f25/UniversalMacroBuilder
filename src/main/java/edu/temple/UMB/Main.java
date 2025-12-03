@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -62,7 +63,7 @@ public class Main {
         } else if (argsRes != null) {
             // enter interactive mode. it will return an array of strings, which can conveniently just be passed to a new instance of main
             String[] constructedArgs = interactiveMode(macroDir);
-            // main(constructedArgs); TODO: uncomment this line when interactive mode builds command correctly
+            main(constructedArgs); // TODO: uncomment this line when interactive mode builds command correctly
             exit(0);
         }
 
@@ -74,7 +75,12 @@ public class Main {
 
         // call either the capture or replayer classes
         if (in_file_str != null) {
-            File inFile = new File(macroDir, in_file_str);
+            File inFile;
+            if (in_file_str.contains("macros")) {
+                inFile = new File(in_file_str);
+            } else {
+                inFile = new File(macroDir, in_file_str);
+            }
             if (!inFile.exists()){
                 logger.fatal("File not found: {}", in_file_str);
                 System.out.println("[ERROR] Macro file not found: " + inFile.getAbsolutePath());
@@ -99,15 +105,20 @@ public class Main {
             new Replayer(inFile.getAbsolutePath(), rc).start();
 
         } else if (out_file_str != null) {
-            File outFile = new File(macroDir, out_file_str);
+            File outFile;
+            if (out_file_str.contains("macros")) {
+                outFile = new File(out_file_str);
+            } else {
+                outFile = new File(macroDir, out_file_str);
+            }
 
             //ask if user wants to overwrite
             if (outFile.exists()){
                 logger.info("File exists: {}", outFile.getAbsolutePath());
                 System.out.println("[WARNING] File already exists: " + outFile.getName());
-                System.out.println("Overwrite? (y/n): ");
-                int response = SC.nextInt();
-                if (response != 'y' && response != 'Y') {
+                System.out.print("Overwrite? (y/n): ");
+                String response = SC.next().trim();
+                if (!response.equalsIgnoreCase("y")) {
                     logger.fatal("User disallowed overwriting of: {}", outFile.getAbsolutePath());
                     System.out.println("Recording cancelled.");
                     SC.close();
@@ -142,61 +153,27 @@ public class Main {
             String new_macro_name = getNewMacroName("Name of the macro to be recorded: ");
             System.out.println(new_macro_name);
             File outFile = new File(macroDir, new_macro_name);
-
-            //ask if user wants to overwrite
-            if (outFile.exists()){
-                logger.info("File exists: {}", outFile.getAbsolutePath());
-                System.out.println("[WARNING] File already exists: " + outFile.getName());
-                Boolean response = yesOrNoPrompt("Overwrite? (y/n)");
-                if (!response) {
-                    logger.fatal("User disallowed overwriting of: {}", outFile.getAbsolutePath());
-                    System.out.println("Recording cancelled.");
-                    SC.close();
-                    exit(0);
-                }
-                logger.info("User approved overwriting of: {}", outFile.getAbsolutePath());
-            }
-            new FileWriter(outFile, false).close(); 
-            logger.info("Recording to file: {}", outFile.getAbsolutePath());
-            System.out.println("[INFO] Recording macro: " + outFile.getName());
-            Recorder recorder = new Recorder(outFile, stopKey);
-            recorder.start();
+            new_args.add(outFile.getAbsolutePath());
         }
-        else if (selected_action == 2){
+        else if (selected_action == 2) {
             new_args.add("-input");
-            String macro_name = getNewMacroName("Name of the macro to be replayed: ");
-            System.out.println(macro_name);
-            File inFile = new File(macroDir, macro_name);
-
-            if (!inFile.exists()){
-                logger.fatal("File not found: {}", in_file_str);
-                System.out.println("[ERROR] Macro file not found: " + inFile.getAbsolutePath());
-                listMacros(macroDir);
-
-                //user can select which macro
-                File selected = promptUserForMacro(macroDir);
-                if(selected ==null){
-                    System.out.println("No valid selection. Exiting.");
-                    exit(1);
-                }
-                inFile = selected;
+            File selected = promptUserForMacro(macroDir);
+            if (selected == null) {
+                System.out.println("No valid selection. Exiting.");
+                exit(1);
             }
+            new_args.add(selected.getAbsolutePath());
+
 
             Boolean repeating = yesOrNoPrompt("Would you like the macro to repeat? (y/n)");
-            if (repeating){
+            if (repeating) {
+                new_args.add("-repeat");
                 repeatCount = getNumberOfRepeats("How many times would you like it to repeat? (enter -1 for infinite)\n");
+                new_args.add(repeatCount.toString());
             }
-            logger.info("Replaying macro: {}", inFile.getAbsolutePath());
-            System.out.println("[INFO] Replaying macro: " + inFile.getName());
-            
-            // DEFAULT: 1 replay
-            int rc = (repeatCount == null ? 1 : repeatCount);
-
-            // Normal repeat via Replayer handling it internally
-            new Replayer(inFile.getAbsolutePath(), rc).start();
         }
-
-        return null;
+        System.out.println(Arrays.toString(new_args.toArray(new String[0])));
+        return new_args.toArray(new String[0]);
     }
 
     private static String getNewMacroName(String prompt) {
@@ -214,20 +191,20 @@ public class Main {
     private static int getNumberOfRepeats(String prompt) {
         while (true) {
             System.out.print(prompt);
-            if (!SC.hasNextInt()) {
-                System.out.println("Try again.");
+            String line = SC.nextLine();
+            try {
+                return Integer.parseInt(line.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Try again. Please enter a number (use -1 for infinite).");
             }
-            return SC.nextInt();
         }
     }
 
 // returns true for yes and false for no
 private static Boolean yesOrNoPrompt(String prompt) {
-    Scanner scanner = new Scanner(System.in);
     while (true) {
         System.out.println(prompt);
-        String input = scanner.nextLine().trim();
-
+        String input = SC.nextLine().trim();
         if (input.equalsIgnoreCase("y")) {
             return true;
         } else if (input.equalsIgnoreCase("n")) {
@@ -278,7 +255,7 @@ private static Boolean yesOrNoPrompt(String prompt) {
 
 
     //list macros
-    private static void listMacros(File macroDir){
+    private static File[] listMacros(File macroDir){
         File[] files = macroDir.listFiles();
         System.out.println("====== Saved Macros ======");
         if (files == null || files.length == 0) {
@@ -290,21 +267,31 @@ private static Boolean yesOrNoPrompt(String prompt) {
             }
         }
         System.out.println("==========================\n");
+        return files;
     }
 
     //prompt for getting the user to select a macro
     private static File promptUserForMacro(File macroDir) {
-        File[] files = macroDir.listFiles();
-        if (files == null || files.length == 0) return null;
-
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter macro number to replay: ");
-        if (!scanner.hasNextInt()) {
-            System.out.println("Invalid input.");
+        File[] files = listMacros(macroDir);
+        if (files == null || files.length == 0) {
             return null;
         }
-        int choice = scanner.nextInt();
-        return files[choice - 1];
+        while (true) {
+            System.out.print("Enter macro number to replay: ");
+            String line = SC.nextLine();
+            int idx;
+            try {
+                idx = Integer.parseInt(line.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                continue;
+            }
+            if (idx < 1 || idx > files.length) {
+                System.out.println("Invalid selection. Please choose a number between 1 and " + files.length + ".");
+                continue;
+            }
+            return files[idx - 1];
+        }
     }
 
     /**
