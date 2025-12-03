@@ -23,7 +23,7 @@ public class Main {
     // but we can also just be careful with null checks
     public static String out_file_str = null;
     public static String in_file_str = null;
-   
+
     public static String stopKey = "ESCAPE";
     public static boolean listMacrosFlag = false;
     private static final String MACRO_FOLDER_NAME = "macros";
@@ -97,12 +97,13 @@ public class Main {
 
             logger.info("Replaying macro: {}", inFile.getAbsolutePath());
             System.out.println("[INFO] Replaying macro: " + inFile.getName());
-            
+
             // DEFAULT: 1 replay
             int rc = (repeatCount == null ? 1 : repeatCount);
 
             // Normal repeat via Replayer handling it internally
             new Replayer(inFile.getAbsolutePath(), rc).start();
+            exit(0);
 
         } else if (out_file_str != null) {
             File outFile;
