@@ -63,7 +63,7 @@ public class Main {
         } else if (argsRes != null) {
             // enter interactive mode. it will return an array of strings, which can conveniently just be passed to a new instance of main
             String[] constructedArgs = interactiveMode(macroDir);
-            main(constructedArgs); // TODO: uncomment this line when interactive mode builds command correctly
+            main(constructedArgs);
             exit(0);
         }
 
@@ -143,8 +143,7 @@ public class Main {
         exit(0);
     }
 
-    private static String[] interactiveMode(File macroDir) throws IOException {
-        // TODO: this will prompt users for info to build the command.
+    private static String[] interactiveMode(File macroDir) {
         ArrayList<String> new_args = new ArrayList<>();
         // it will start by asking whether the user wants to record or replay
         // TODO: add a macro manipulation mode for renaming and deleting files
@@ -152,9 +151,9 @@ public class Main {
         if  (selected_action == 1) {
             new_args.add("-output");
             String new_macro_name = getNewMacroName("Name of the macro to be recorded: ");
-            System.out.println(new_macro_name);
             File outFile = new File(macroDir, new_macro_name);
             new_args.add(outFile.getAbsolutePath());
+            // TODO: add arg for custom stopkey (could even list them?)
         }
         else if (selected_action == 2) {
             new_args.add("-input");
@@ -173,7 +172,7 @@ public class Main {
                 new_args.add(repeatCount.toString());
             }
         }
-        System.out.println(Arrays.toString(new_args.toArray(new String[0])));
+        logger.debug(Arrays.toString(new_args.toArray(new String[0])));
         return new_args.toArray(new String[0]);
     }
 
