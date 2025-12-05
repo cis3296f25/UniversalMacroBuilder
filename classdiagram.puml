@@ -1,14 +1,11 @@
 @startuml
 skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
 
 class Main {
-  + out_file_str: String
-  + in_file_str: String
-  + stopKey: String
-  + listMacrosFlag: boolean
   + main(args: String[]): void
   + argChecks(args: String[]): String
-  + listMacros(macroDir: File): void
+  + listMacros(macroDir: File): File[]
   + promptUserForMacro(macroDir: File): File
 }
 
@@ -20,24 +17,41 @@ class Recorder {
 }
 
 class Replayer {
-  - inFile: File
   - loadedJNativeHookEvents: LinkedHashMap<Long, String>
-  - l: Loader
+  - loadedJNativeHookMouseEvents: LinkedHashMap<Long, String>
+  - repeatCount: int
+  - kl: Loader
+  - ml: MouseLoader
   - kr: KeyReplayer
-  + Replayer(inPath: String)
+  - mr: MouseReplayer
+  + Replayer(inPath: String, repeatCount: int)
   + start(): void
 }
 
 class KeyReplayer {
   - awtEvents: LinkedHashMap<Long, AWTReplayEvent>
-  + scheduler: ScheduledExecutorService
+  + exec: ScheduledExecutorService
   + KeyReplayer(loadedJNativeHookEvents: LinkedHashMap<Long, String>)
+  + start(): void
+}
+
+class MouseReplayer {
+  - awtMouseEvents: LinkedHashMap<Long, AWTReplayMouseEvent>
+  + exec: ScheduledExecutorService
+  + MouseReplayer(loadedJNativeHookEvents: LinkedHashMap<Long, String>)
   + start(): void
 }
 
 class AWTReplayEvent {
   - context: String
   - event: int
+}
+
+class AWTReplayMouseEvent {
+  - context: String
+  - x: int
+  - y: int
+  - button: int
 }
 
 class Writer {
@@ -50,6 +64,12 @@ class Writer {
 class Loader {
   - inFile: File
   + Loader(inFile: File)
+  + loadJNativeEventsFromFile(): LinkedHashMap<Long, String>
+}
+
+class MouseLoader {
+  - inFile: File
+  + MouseLoader(inFile: File)
   + loadJNativeEventsFromFile(): LinkedHashMap<Long, String>
 }
 
@@ -88,16 +108,26 @@ class MouseEvent extends Event {
   + toString(): String
 }
 
-Main --> Recorder
-Main --> Replayer
-Recorder *-- InputEventRecorder
-Recorder ..> Writer
-InputEventRecorder o-- KeyEvent
-InputEventRecorder o-- MouseEvent
-Replayer *-- Loader
-Replayer *-- KeyReplayer
-KeyReplayer *-- AWTReplayEvent
-Writer ..> Event
+' Navigability and multiplicity
+Main "1" --> "0..1" Recorder : creates
+Main "1" --> "0..1" Replayer : creates
+
+Recorder "1" *-- "1" InputEventRecorder : composes
+Recorder "1" ..> "0..*" Writer : uses
+
+InputEventRecorder "1" o-- "0..*" KeyEvent : records
+InputEventRecorder "1" o-- "0..*" MouseEvent : records
+
+Replayer "1" *-- "1" Loader : composes
+Replayer "1" *-- "1" MouseLoader : composes
+Replayer "1" *-- "1" KeyReplayer : composes
+Replayer "1" *-- "1" MouseReplayer : composes
+
+KeyReplayer "1" *-- "0..*" AWTReplayEvent : schedules
+MouseReplayer "1" *-- "0..*" AWTReplayMouseEvent : schedules
+
+Writer "1" ..> "0..*" Event : writes
+
 interface NativeKeyListener
 interface NativeMouseInputListener
 InputEventRecorder ..|> NativeKeyListener
