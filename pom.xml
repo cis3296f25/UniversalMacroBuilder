@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.example</groupId>
     <artifactId>UniversalMacroBuilder</artifactId>
-    <version>0.4-alpha-prerelease</version>
+    <version>1.0-full-release</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

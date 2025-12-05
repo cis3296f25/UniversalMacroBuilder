@@ -27,7 +27,7 @@ public class Recorder {
      */
     public void start() {
         try {
-            System.out.println("Recording started. Press your specified stopkey to stop...");
+            System.out.println("Recording started. Press your specified stopkey to stop (default is ESC)...");
             logger.info("Recording started. Waiting for stop key...");
             inputEventRecorder.startRecording();
 
