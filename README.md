@@ -1,28 +1,39 @@
-# Project Name
-Put here a short paragraph describing your project. 
-Adding an screenshot or a mockup of your application in action would be nice.  
+# Universal Macro Builder
+Universal Macro Builder is a tool for automating repetitive tasks by recording and replaying mouse and keyboard input.
 
-![This is a screenshot.](images.png)
 # How to run
-Provide here instructions on how to use your application.   
-- Download the latest binary from the Release section on the right on GitHub.  
-- On the command line uncompress using
+- Download the latest JAR from the Release section on the right on GitHub.
+- Run with
 ```
-tar -xzf  
+java -jar UniversalMacroBuilder.jar (-output <out_path> | -input <in_path>) [-stopkey <stopkey>] [-l]
 ```
-- On the command line run with
+Interactive mode:
+- To run in interactive mode run
 ```
-./hello
+java -jar UniversalMacroBuilder.jar
 ```
-- You will see Hello World! on your terminal. 
+Arguments can be provided to skip the interactive mode. Flags are as specified below:
+
+`-output [path-to-output-file]`:  enters record mode and writes the recorded macro to the output file specified.
+
+`-input [path-to-input-file]`: enters replay mode and executes the macro saved at the specified path.
+
+`-l`:  list all available macros
+
+`-stopkey [key]`:  the key to stop recording and exit the program.
+
+`-repeat [count]`:  enters replay mode and executes the specified macro infinitely or count times. Leave blank for infinite replay.
+
+Stop key codes are inputted as strings and resolved according to the [JNative Constants page](https://javadoc.io/static/com.1stleg/jnativehook/2.0.3/constant-values.html#org.jnativehook.keyboard.NativeKeyEvent.VC_N).
+For example, an input of `NUM_LOCK` will properly resolve to `VC_NUM_LOCK`, whereas `NUMLOCK` will fail and default to `VC_ESCAPE`.
+
+Either `-output` or `-input` must be provided, and they each require paths to be given as the next argument.
 
 # How to contribute
-Follow this project board to know the latest status of the project: [http://...]([http://...])  
+Follow this project board to know the latest status of the project: https://github.com/orgs/cis3296f25/projects/66/views/1
 
 ### How to build
-- Use this github repository: ... 
-- Specify what branch to use for a more stable release or for cutting edge development.  
-- Use InteliJ 11
-- Specify additional library to download if needed 
-- What file and target to compile and run. 
-- What is expected to happen when the app start. 
+- Use this GitHub repository: https://github.com/cis3296f25/UniversalMacroBuilder
+- Main is reserved for stable releases. Please create PRs to a staging branch.
+- Use provided pom.xml for dependencies.
+- Run `mvn package` to build.

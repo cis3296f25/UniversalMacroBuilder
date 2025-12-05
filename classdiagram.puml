@@ -1,0 +1,136 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+
+class Main {
+  + main(args: String[]): void
+  + argChecks(args: String[]): String
+  + listMacros(macroDir: File): File[]
+  + promptUserForMacro(macroDir: File): File
+}
+
+class Recorder {
+  - outPath: File
+  - inputEventRecorder: InputEventRecorder
+  + Recorder(outPath: File, stopKey: String)
+  + start(): void
+}
+
+class Replayer {
+  - loadedJNativeHookEvents: LinkedHashMap<Long, String>
+  - loadedJNativeHookMouseEvents: LinkedHashMap<Long, String>
+  - repeatCount: int
+  - kl: Loader
+  - ml: MouseLoader
+  - kr: KeyReplayer
+  - mr: MouseReplayer
+  + Replayer(inPath: String, repeatCount: int)
+  + start(): void
+}
+
+class KeyReplayer {
+  - awtEvents: LinkedHashMap<Long, AWTReplayEvent>
+  + exec: ScheduledExecutorService
+  + KeyReplayer(loadedJNativeHookEvents: LinkedHashMap<Long, String>)
+  + start(): void
+}
+
+class MouseReplayer {
+  - awtMouseEvents: LinkedHashMap<Long, AWTReplayMouseEvent>
+  + exec: ScheduledExecutorService
+  + MouseReplayer(loadedJNativeHookEvents: LinkedHashMap<Long, String>)
+  + start(): void
+}
+
+class AWTReplayEvent {
+  - context: String
+  - event: int
+}
+
+class AWTReplayMouseEvent {
+  - context: String
+  - x: int
+  - y: int
+  - button: int
+}
+
+class Writer {
+  + enum Type { MOUSE, KEY }
+  - type: Type
+  + Writer(type: Type)
+  + writeToFile(path: File, events: List<Event>): void
+}
+
+class Loader {
+  - inFile: File
+  + Loader(inFile: File)
+  + loadJNativeEventsFromFile(): LinkedHashMap<Long, String>
+}
+
+class MouseLoader {
+  - inFile: File
+  + MouseLoader(inFile: File)
+  + loadJNativeEventsFromFile(): LinkedHashMap<Long, String>
+}
+
+class InputEventRecorder implements NativeKeyListener, NativeMouseInputListener {
+  - keyEvents: List<KeyEvent>
+  - mouseEvents: List<MouseEvent>
+  - recording: boolean
+  - firstEventTime: long
+  - stopKeyCode: int
+  + InputEventRecorder(stopKeyName: String)
+  + startRecording(): void
+  + getKeyEvents(): List<KeyEvent>
+  + getMouseEvents(): List<MouseEvent>
+  + isRecording(): boolean
+}
+
+class Event {
+  - delta: long
+  + Event(delta: long)
+  + getDelta(): long
+}
+
+class KeyEvent extends Event {
+  - event: NativeKeyEvent
+  - context: String
+  + KeyEvent(delta: long, event: NativeKeyEvent, context: String)
+  + getEvent(): NativeKeyEvent
+  + toString(): String
+}
+
+class MouseEvent extends Event {
+  - event: NativeMouseEvent
+  - context: String
+  + MouseEvent(delta: long, event: NativeMouseEvent, context: String)
+  + getNativeMouseEvent(): NativeMouseEvent
+  + toString(): String
+}
+
+' Navigability and multiplicity
+Main "1" --> "0..1" Recorder : creates
+Main "1" --> "0..1" Replayer : creates
+
+Recorder "1" *-- "1" InputEventRecorder : composes
+Recorder "1" ..> "0..*" Writer : uses
+
+InputEventRecorder "1" o-- "0..*" KeyEvent : records
+InputEventRecorder "1" o-- "0..*" MouseEvent : records
+
+Replayer "1" *-- "1" Loader : composes
+Replayer "1" *-- "1" MouseLoader : composes
+Replayer "1" *-- "1" KeyReplayer : composes
+Replayer "1" *-- "1" MouseReplayer : composes
+
+KeyReplayer "1" *-- "0..*" AWTReplayEvent : schedules
+MouseReplayer "1" *-- "0..*" AWTReplayMouseEvent : schedules
+
+Writer "1" ..> "0..*" Event : writes
+
+interface NativeKeyListener
+interface NativeMouseInputListener
+InputEventRecorder ..|> NativeKeyListener
+InputEventRecorder ..|> NativeMouseInputListener
+
+@enduml
