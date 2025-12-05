@@ -169,7 +169,12 @@ public class Main {
             if (repeating) {
                 new_args.add("-repeat");
                 repeatCount = getNumberOfRepeats("How many times would you like it to repeat? (enter -1 for infinite)\n");
-                new_args.add(repeatCount.toString());
+                if (repeatCount < -1) {
+                    System.out.println("Not a valid repeat amount. Exiting.");
+                    exit(1);
+                } else if (repeatCount != -1) {
+                    new_args.add(repeatCount.toString()); // make sure to not add arg for inf repeat
+                }
             }
         }
         logger.debug(Arrays.toString(new_args.toArray(new String[0])));

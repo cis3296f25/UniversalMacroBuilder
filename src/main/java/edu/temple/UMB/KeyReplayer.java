@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
+// TODO: kepp of track of held keys and dont re-record presses, it can lag with held keys
+
 /**
  * Replays a sequence of translated keyboard {@link AWTReplayEvent} items at precise timestamps.
  * Backed by a single-threaded {@link ScheduledExecutorService} and a {@link Robot} for key emission.
